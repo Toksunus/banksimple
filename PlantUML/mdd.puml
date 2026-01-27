@@ -1,0 +1,155 @@
+@startuml
+title Banksimple - Modèle de Domaine (MDD)
+
+class Client {
+  +clientId: UUID
+  +nom: String
+  +adresse: String
+  +nasSimule: String
+  +statut: StatutClient
+}
+
+enum StatutClient {
+  Pending
+  Active
+  Suspended
+}
+
+class Authentification {
+  +login: String
+  +motDePasse: String
+  +mfaActive: Boolean
+}
+
+class Session {
+  +sessionId: UUID
+  +dateCreation: DateTime
+  +dateExpiration: DateTime
+}
+
+class VerificationKYC {
+  +kycId: UUID
+  +dateVerification: Date
+  +resultat: Boolean
+}
+
+Client "1" -- "1" Authentification
+Client "1" -- "0..*" Session
+Client "1" -- "1" VerificationKYC
+
+'====================
+
+class CompteBancaire {
+  +compteId: UUID
+  +type: TypeCompte
+  +solde: Decimal
+  +dateOuverture: Date
+  +statut: StatutCompte
+}
+
+enum TypeCompte {
+  Cheque
+  Epargne
+}
+
+enum StatutCompte {
+  Actif
+  Ferme
+}
+
+Client "1" -- "1..*" CompteBancaire
+
+'====================
+
+class Transaction {
+  +transactionId: UUID
+  +date: DateTime
+  +montant: Decimal
+  +type: TypeTransaction
+  +statut: StatutTransaction
+}
+
+enum TypeTransaction {
+  Virement
+  PaiementFacture
+  Credit
+  Debit
+}
+
+enum StatutTransaction {
+  EnCours
+  Completee
+  Rejetee
+}
+
+CompteBancaire "1" -- "0..*" Transaction
+
+class Virement {
+  +beneficiaire: String
+}
+
+class PaiementFacture {
+  +fournisseur: String
+  +referenceFacture: String
+}
+
+Transaction <|-- Virement
+Transaction <|-- PaiementFacture
+
+'====================
+
+class ProduitCredit {
+  +creditId: UUID
+  +montantAutorise: Decimal
+  +tauxInteret: Float
+  +soldeUtilise: Decimal
+}
+
+Client "1" -- "0..*" ProduitCredit
+
+'====================
+
+class ControleAML {
+  +controleId: UUID
+  +niveauRisque: NiveauRisque
+  +dateAnalyse: DateTime
+}
+
+enum NiveauRisque {
+  Faible
+  Moyen
+  Eleve
+}
+
+Transaction "1" -- "0..1" ControleAML
+
+'====================
+
+class JournalAudit {
+  +journalId: UUID
+  +horodatage: DateTime
+  +action: String
+  +acteur: String
+}
+
+Client "1" -- "0..*" JournalAudit
+Transaction "1" -- "0..*" JournalAudit
+
+'====================
+
+class ClotureJournaliere {
+  +dateCloture: Date
+  +totalCredits: Decimal
+  +totalDebits: Decimal
+}
+
+class ReleveBancaire {
+  +releveId: UUID
+  +periode: Date
+  +dateGeneration: Date
+}
+
+ClotureJournaliere "1" -- "1..*" ReleveBancaire
+CompteBancaire "1" -- "0..*" ReleveBancaire
+
+@enduml
