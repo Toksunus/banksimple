@@ -1,0 +1,57 @@
+@startuml
+title BankSimple - Diagramme de Déploiement
+
+node "Conteneur API Gateway" {
+  component "Kong" <<API Gateway>> as Gateway
+}
+
+node "Conteneur Observabilité" {
+  component "Grafana" <<Monitoring>> as Grafana
+  component "Prometheus" <<Metrics>> as Prometheus
+  Grafana ..> Prometheus : <<interface>>
+}
+
+node "Conteneur ClientService" {
+  component "ClientService.Api" <<component>> as Client_API
+  database "ClientsDB" <<database>> as Client_DB
+  Client_API ..> Client_DB : <<interface>>
+}
+
+node "Conteneur AccountService" {
+  component "AccountService.Api" <<component>> as Account_API
+  database "AccountsDB" <<database>> as Account_DB
+  Account_API ..> Account_DB : <<interface>>
+}
+
+node "Conteneur PaymentService" {
+  component "PaymentService.Api" <<component>> as Payment_API
+  database "PaymentsDB" <<database>> as Payment_DB
+  Payment_API ..> Payment_DB : <<interface>>
+}
+
+node "Conteneur ComplianceService" {
+  component "ComplianceService.Api" <<component>> as Compliance_API
+  database "ComplianceDB" <<database>> as Compliance_DB
+  Compliance_API ..> Compliance_DB : <<interface>>
+}
+
+node "Conteneur Cache" {
+  database "Redis" <<Storage>> as Cache
+}
+
+Gateway --> Client_API
+Gateway --> Account_API
+Gateway --> Payment_API
+Gateway --> Compliance_API
+
+Prometheus ..> Client_API
+Prometheus ..> Account_API
+Prometheus ..> Payment_API
+Prometheus ..> Compliance_API
+
+Client_API --> Cache
+Account_API --> Cache
+Payment_API --> Cache
+Compliance_API --> Cache
+
+@enduml

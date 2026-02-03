@@ -1,0 +1,31 @@
+@startuml
+title BankSimple - Diagramme d'Activité
+
+start
+
+:Client se connecte;
+
+if (Authentification réussie?) then (oui)
+  :Sélectionner compte;
+  :Saisir bénéficiaire et montant;
+  
+  if (Solde suffisant?) then (oui)
+    if (Contrôle AML passé?) then (oui)
+      :Exécuter le virement;
+      :Journaliser la transaction;
+      :Envoyer confirmation au client;
+    else (non)
+      :Bloquer la transaction;
+      :Signaler;
+    endif
+  else (non)
+    :Rejeter le virement;
+    :Afficher "Solde insuffisant";
+  endif
+else (non)
+  :Afficher "Erreur d'authentification";
+endif
+
+stop
+
+@enduml

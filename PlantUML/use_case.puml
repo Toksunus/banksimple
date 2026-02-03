@@ -1,0 +1,10 @@
+@startuml
+    Client.e --> (Inscription & Vérification KYC)
+    Client.e --> (Authentification & MFA)
+    Client.e --> (Ouverture de compte bancaire)
+    Client.e --> (Consultation des soldes et historiques)
+    Client.e --> (Virement bancaire)
+    Client.e --> (Paiement de factures)
+    Client.e --> (Consulter alertes & transactions suspectes)
+    Client.e --> (Consulter relevés bancaires)
+@enduml
