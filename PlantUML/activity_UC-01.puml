@@ -1,0 +1,41 @@
+@startuml
+title UC-01: Inscription & Vérification d'identité (KYC)
+
+start
+
+:Client fournit données personnelles\n(nom, adresse, NAS simulé);
+
+if (Données valides?) then (oui)
+  :Créer profil client (Pending);
+  
+  :Générer et envoyer code OTP par email;
+  
+  :Client saisit code OTP;
+  
+  if (OTP valide?) then (oui)
+    
+    :Client soumet documents KYC;
+    
+    :Vérification NAS;
+    :Évaluer risque AML;
+    
+    if (Risque) then (faible)
+      :Approuver KYC;
+      :Mettre à jour profil (Active);
+      :Envoyer email de confirmation;
+    else (élevé)
+      :Rejeter KYC;
+      :Envoyer email de rejet;
+    endif
+    
+  else (non)
+    :Afficher erreur "OTP invalide ou expiré";
+  endif
+  
+else (non)
+  :Afficher erreur de validation;
+endif
+
+stop
+
+@enduml

@@ -1,0 +1,20 @@
+@startuml
+title UC-04: Consultation des soldes et historiques
+
+start
+
+:Client sélectionne un compte;
+
+if (Compte existe?) then (oui)
+  
+  :Récupérer solde actuel et historique des transactions;
+  
+  :Afficher solde et historique;
+  
+else (non)
+  :Afficher erreur "Compte introuvable";
+endif
+
+stop
+
+@enduml

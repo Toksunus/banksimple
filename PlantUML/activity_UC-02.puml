@@ -1,0 +1,39 @@
+@startuml
+title UC-02: Authentification & MFA
+
+start
+
+:Client saisit identifiant et mot de passe;
+
+if (Identifiants valides?) then (oui)
+  
+  if (Compte verrouillé?) then (non)
+    
+    :Générer et envoyer code OTP par email;
+    
+    :Client saisit code OTP;
+    
+    if (OTP valide?) then (oui)
+      :Créer session;
+      :reinitialiser tentatives échouées;
+    else (non)
+      :Afficher erreur "OTP invalide ou expiré";
+    endif
+    
+  else (oui)
+    :Afficher erreur "Compte verrouillé";
+  endif
+  
+else (non)
+  :Incrémenter tentatives échouées;
+  
+  if (Tentatives >= 5?) then (oui)
+    :Verrouiller compte (30 minutes);
+  else (non)
+    :Afficher erreur "Identifiants invalides";
+  endif
+endif
+
+stop
+
+@enduml

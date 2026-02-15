@@ -74,7 +74,7 @@ class PaiementFacture {
 
 class JournalAudit {
   +journalId: UUID
-  +horodatage: DateTime
+  +dateAction: DateTime
   +action: String
   +acteur: String
 }
@@ -104,13 +104,12 @@ Client "1" -- "1..*" CompteBancaire
 
 CompteBancaire "1" -- "0..*" Transaction
 CompteBancaire "1" -- "0..*" ReleveBancaire
-CompteBancaire "1" -- "1" ProduitCredit
+CompteBancaire "1" -- "0..1" ProduitCredit
+CompteBancaire "1" -- "0..*" ClotureJournaliere
 
 Transaction <|-- Virement
 Transaction <|-- PaiementFacture
 Transaction "1" -- "0..1" ControleAML
 Transaction "1" -- "0..*" JournalAudit
-
-ClotureJournaliere "1" -- "1..*" ReleveBancaire
 
 @enduml

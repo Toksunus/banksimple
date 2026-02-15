@@ -1,0 +1,30 @@
+@startuml
+title UC-05: Virement bancaire
+
+start
+
+:Client saisit bénéficiaire et montant;
+
+if (Solde suffisant?) then (oui)
+  
+  :Vérifier contrôles AML;
+  
+  if (Contrôles AML passés?) then (oui)
+    
+    :Débiter compte source;
+    :Créditer compte bénéficiaire;
+    
+    :Journaliser transaction;
+    
+  else (non)
+    :Bloquer transaction;
+    :Signaler;
+  endif
+  
+else (non)
+  :Afficher erreur "Solde insuffisant";
+endif
+
+stop
+
+@enduml

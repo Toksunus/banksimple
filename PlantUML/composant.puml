@@ -1,0 +1,63 @@
+@startuml
+title BankSimple - Diagramme de Composants
+
+package "Api" <<Presentation>> {
+    [ClientController]
+    [AccountController]
+    [PaymentController]
+}
+
+package "Application" <<Use Cases>> {
+    package Commands {
+        [WriteClient]
+        [WriteAccount]
+        [WriteVirement]
+    }
+    
+    package Queries {
+        [ReadClient]
+        [ReadAccountBalance]
+    }
+}
+
+package "Domain" <<Core>> {
+    [Client]
+    [CompteBancaire]
+    [Virement]
+    [Transaction]
+}
+
+package "Infrastructure" <<Persistence>> {
+    [ClientRepository]
+    [AccountRepository]
+    [TransactionRepository]
+    database "DbContext"
+}
+
+' Write flows
+[ClientController] -down-> [WriteClient]
+[WriteClient] -down-> [Client]
+[WriteClient] -right-> [ClientRepository]
+
+[AccountController] -down-> [WriteAccount]
+[WriteAccount] -down-> [CompteBancaire]
+[WriteAccount] -right-> [AccountRepository]
+
+[PaymentController] --> [WriteVirement]
+[WriteVirement] --> [Virement]
+[WriteVirement] --> [Transaction]
+[WriteVirement] --> [TransactionRepository]
+
+' Read flows
+[ClientController] --> [ReadClient]
+[ReadClient] --> [ClientRepository]
+
+[AccountController] --> [ReadAccountBalance]
+[ReadAccountBalance] --> [AccountRepository]
+
+' Infrastructure
+[ClientRepository] --> DbContext
+[AccountRepository] --> DbContext
+[TransactionRepository] --> DbContext
+
+@enduml

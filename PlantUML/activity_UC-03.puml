@@ -1,0 +1,22 @@
+@startuml
+title UC-03: Ouverture de compte bancaire
+
+start
+
+:Client ouver un compte\n(Chèque ou Épargne);
+
+if (Profil KYC actif?) then (oui)
+  
+  :Créer compte bancaire;
+  :Définir solde initial (0.00);
+  :Générer numéro de compte unique;
+  
+  :Journaliser création de compte;
+  
+else (non)
+  :Afficher erreur "Profil non validé";
+endif
+
+stop
+
+@enduml
