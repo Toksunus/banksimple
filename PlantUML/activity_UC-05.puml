@@ -1,4 +1,4 @@
-@startuml
+@startuml activity_UC-05
 title UC-05: Virement bancaire
 
 start
@@ -15,7 +15,8 @@ if (Solde suffisant?) then (oui)
     :Créditer compte bénéficiaire;
     
     :Journaliser transaction;
-    
+    :Envoyer confirmation au client;
+
   else (non)
     :Bloquer transaction;
     :Signaler;

@@ -1,22 +1,27 @@
-@startuml
-title BankSimple - Diagramme de Composants
+@startuml composant
+title BankSimple - Diagramme de Composants (UC-01 à UC-05)
+
+left to right direction
+skinparam linetype ortho
 
 package "Api" <<Presentation>> {
     [ClientController]
+    [AuthController]
     [AccountController]
     [PaymentController]
 }
 
 package "Application" <<Use Cases>> {
-    package Commands {
+    package "Commands" {
         [WriteClient]
+        [WriteAuthentification]
         [WriteAccount]
         [WriteVirement]
     }
-    
-    package Queries {
+    package "Queries" {
         [ReadClient]
         [ReadAccountBalance]
+        [ReadTransactions]
     }
 }
 
@@ -29,35 +34,45 @@ package "Domain" <<Core>> {
 
 package "Infrastructure" <<Persistence>> {
     [ClientRepository]
+    [AuthRepository]
     [AccountRepository]
     [TransactionRepository]
-    database "DbContext"
+    database [DbContext]
 }
 
-' Write flows
-[ClientController] -down-> [WriteClient]
-[WriteClient] -down-> [Client]
-[WriteClient] -right-> [ClientRepository]
+' UC-01/02 — Auth
+[AuthController] --> [WriteAuthentification]
+[WriteAuthentification] --> [Client]
+[WriteAuthentification] --> [AuthRepository]
 
-[AccountController] -down-> [WriteAccount]
-[WriteAccount] -down-> [CompteBancaire]
-[WriteAccount] -right-> [AccountRepository]
+' UC-01 — Inscription
+[ClientController] --> [WriteClient]
+[WriteClient] --> [Client]
+[WriteClient] --> [ClientRepository]
+[ClientController] --> [ReadClient]
+[ReadClient] --> [ClientRepository]
 
+' UC-03 — Ouverture de compte
+[AccountController] --> [WriteAccount]
+[WriteAccount] --> [CompteBancaire]
+[WriteAccount] --> [AccountRepository]
+
+' UC-04 — Consultation
+[AccountController] --> [ReadAccountBalance]
+[ReadAccountBalance] --> [AccountRepository]
+[AccountController] --> [ReadTransactions]
+[ReadTransactions] --> [TransactionRepository]
+
+' UC-05 — Virement
 [PaymentController] --> [WriteVirement]
 [WriteVirement] --> [Virement]
 [WriteVirement] --> [Transaction]
 [WriteVirement] --> [TransactionRepository]
 
-' Read flows
-[ClientController] --> [ReadClient]
-[ReadClient] --> [ClientRepository]
-
-[AccountController] --> [ReadAccountBalance]
-[ReadAccountBalance] --> [AccountRepository]
-
 ' Infrastructure
-[ClientRepository] --> DbContext
-[AccountRepository] --> DbContext
-[TransactionRepository] --> DbContext
+[ClientRepository] --> [DbContext]
+[AuthRepository] --> [DbContext]
+[AccountRepository] --> [DbContext]
+[TransactionRepository] --> [DbContext]
 
 @enduml

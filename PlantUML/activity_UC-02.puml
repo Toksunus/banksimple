@@ -1,4 +1,4 @@
-@startuml
+@startuml activity_UC-02
 title UC-02: Authentification & MFA
 
 start

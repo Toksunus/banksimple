@@ -16,5 +16,16 @@ services:
       timeout: 3s
       retries: 10
 
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: banksimple-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@banksimple.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+
 volumes:
   pgdata:

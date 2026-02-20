@@ -1,4 +1,4 @@
-@startuml
+@startuml mdd
 title BankSimple - Modèle de Domaine (MDD)
 
 class Client {
@@ -6,12 +6,13 @@ class Client {
   +nom: String
   +adresse: String
   +nasSimule: String
-  +statut: String
+  +statut: String <<Pending|Active|Rejected>>
 }
 
 '===============================================
 
 class Authentification {
+  +authentificationId: UUID
   +login: String
   +motDePasse: String
   +mfaActive: Boolean
@@ -32,9 +33,9 @@ Client "1" -- "0..*" Session
 '===============================================
 
 class VerificationKYC {
-  +kycId: UUID
+  +verificationKYCId: UUID
   +dateVerification: Date
-  +resultat: Boolean
+  +resultat: String <<Approuve|Rejete>>
 }
 
 Client "1" -- "1" VerificationKYC
@@ -42,11 +43,11 @@ Client "1" -- "1" VerificationKYC
 '===============================================
 
 class CompteBancaire {
-  +compteId: UUID
-  +type: String
+  +compteBancaireId: UUID
+  +type: String <<Cheque|Epargne>>
   +solde: Decimal
   +dateOuverture: Date
-  +statut: String
+  +statut: String <<Actif|Ferme>>
 }
 
 class Transaction {
@@ -59,7 +60,7 @@ class Transaction {
 
 class ControleAML {
   +controleId: UUID
-  +niveauRisque: String
+  +niveauRisque: String <<Faible|Eleve>>
   +dateAnalyse: DateTime
 }
 
@@ -111,5 +112,7 @@ Transaction <|-- Virement
 Transaction <|-- PaiementFacture
 Transaction "1" -- "0..1" ControleAML
 Transaction "1" -- "0..*" JournalAudit
+
+ClotureJournaliere "1" -- "0..*" ReleveBancaire
 
 @enduml
