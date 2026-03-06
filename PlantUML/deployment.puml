@@ -1,14 +1,18 @@
-@startuml
-title BankSimple - Diagramme de Déploiement
+@startuml deployment
+title BankSimple - Diagramme de Déploiement (Microservices)
 
 node "Conteneur API Gateway" {
   component "Kong" <<API Gateway>> as Gateway
 }
 
+node "Conteneur Load Balancer" {
+  component "NGINX" <<Load Balancer>> as LB
+}
+
 node "Conteneur Observabilité" {
   component "Grafana" <<Monitoring>> as Grafana
   component "Prometheus" <<Metrics>> as Prometheus
-  Grafana ..> Prometheus : <<interface>>
+  Grafana ..> Prometheus : <<scrape>>
 }
 
 node "Conteneur ClientService" {
@@ -36,18 +40,19 @@ node "Conteneur ComplianceService" {
 }
 
 node "Conteneur Cache" {
-  database "Redis" <<Storage>> as Cache
+  database "Redis" <<Cache>> as Cache
 }
 
-Gateway --> Client_API
-Gateway --> Account_API
-Gateway --> Payment_API
-Gateway --> Compliance_API
+Gateway --> LB : HTTP
+LB --> Client_API : HTTP
+LB --> Account_API : HTTP
+LB --> Payment_API : HTTP
+LB --> Compliance_API : HTTP
 
-Prometheus ..> Client_API
-Prometheus ..> Account_API
-Prometheus ..> Payment_API
-Prometheus ..> Compliance_API
+Prometheus ..> Client_API : <<scrape>>
+Prometheus ..> Account_API : <<scrape>>
+Prometheus ..> Payment_API : <<scrape>>
+Prometheus ..> Compliance_API : <<scrape>>
 
 Client_API --> Cache
 Account_API --> Cache

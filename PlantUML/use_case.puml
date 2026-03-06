@@ -1,10 +1,21 @@
-@startuml
-    Client.e --> (Inscription & Vérification KYC)
-    Client.e --> (Authentification & MFA)
-    Client.e --> (Ouverture de compte bancaire)
-    Client.e --> (Consultation des soldes et historiques)
-    Client.e --> (Virement bancaire)
-    Client.e --> (Paiement de factures)
-    Client.e --> (Consulter alertes & transactions suspectes)
-    Client.e --> (Consulter relevés bancaires)
+@startuml use_case
+title BankSimple - Diagramme de Cas d'Utilisation
+
+actor Client
+actor Administrateur
+
+Client --> (UC-01 : Inscription & Vérification KYC)
+Client --> (UC-02 : Authentification & MFA)
+Client --> (UC-03 : Ouverture de compte bancaire)
+Client --> (UC-04 : Consultation des soldes et historiques)
+Client --> (UC-05 : Virement bancaire)
+Client --> (UC-06 : Paiement de factures)
+Client --> (UC-07 : Consulter alertes & transactions suspectes)
+Client --> (UC-08 : Consulter relevés bancaires)
+
+Administrateur --> (UC-03 : Ouverture de compte bancaire)
+Administrateur --> (UC-04 : Consultation des soldes et historiques)
+Administrateur --> (UC-07 : Consulter alertes & transactions suspectes)
+Administrateur --> (UC-08 : Consulter relevés bancaires)
+
 @enduml

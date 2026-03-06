@@ -1,4 +1,4 @@
-@startuml
+@startuml activity_UC-01
 title UC-01: Inscription & Vérification d'identité (KYC)
 
 start
