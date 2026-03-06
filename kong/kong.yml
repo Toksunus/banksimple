@@ -1,0 +1,48 @@
+_format_version: "3.0"
+_transform: true
+
+services:
+  - name: banksimple-api
+    url: http://nginx:80
+    connect_timeout: 5000
+    read_timeout: 30000
+    write_timeout: 30000
+
+routes:
+  - name: banksimple-routes
+    service: banksimple-api
+    paths:
+      - /
+    strip_path: false
+    preserve_host: true
+
+plugins:
+  - name: rate-limiting
+    config:
+      minute: 1800
+      policy: local
+  - name: cors
+    config:
+      origins:
+        - "*"
+      methods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - OPTIONS
+      headers:
+        - Authorization
+        - Content-Type
+        - X-Api-Key
+      exposed_headers:
+        - X-Gateway
+      max_age: 3600
+  - name: prometheus
+    config:
+      per_consumer: false
+  - name: response-transformer
+    config:
+      add:
+        headers:
+          - "X-Gateway:kong-banksimple"

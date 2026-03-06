@@ -6,7 +6,8 @@ class Client {
   +nom: String
   +adresse: String
   +nasSimule: String
-  +statut: String <<Pending|Active|Rejected>>
+  +statut: String
+  ' Pending | Active | Rejected
 }
 
 '===============================================
@@ -35,37 +36,47 @@ Client "1" -- "0..*" Session
 class VerificationKYC {
   +verificationKYCId: UUID
   +dateVerification: Date
-  +resultat: String <<Approuve|Rejete>>
+  +resultat: String
+  ' Approuve | Rejete
 }
 
 Client "1" -- "1" VerificationKYC
 
 '===============================================
 
-class CompteBancaire {
-  +compteBancaireId: UUID
-  +type: String <<Cheque|Epargne>>
+class Compte {
+  +compteId: UUID
+  +type: String
+  ' Cheque | Epargne
   +solde: Decimal
-  +dateOuverture: Date
-  +statut: String <<Actif|Ferme>>
+  +dateOuverture: DateTime
+  +statut: String
+  ' Actif | Ferme
+}
+
+class Virement {
+  +virementId: UUID
+  +compteSourceId: UUID
+  +compteDestinataireId: UUID
+  +montant: Decimal
+  +dateVirement: DateTime
+  +statut: String
+  ' Suspect | Effectué | Echoué
 }
 
 class Transaction {
   +transactionId: UUID
-  +date: DateTime
-  +montant: Decimal
   +type: String
-  +statut: String
+  +montant: Decimal
+  +dateTransaction: DateTime
+  +description: String
 }
 
 class ControleAML {
   +controleId: UUID
-  +niveauRisque: String <<Faible|Eleve>>
+  +niveauRisque: String
+  ' Faible | Eleve
   +dateAnalyse: DateTime
-}
-
-class Virement {
-  +beneficiaire: String
 }
 
 class PaiementFacture {
@@ -78,12 +89,6 @@ class JournalAudit {
   +dateAction: DateTime
   +action: String
   +acteur: String
-}
-
-class ClotureJournaliere {
-  +dateCloture: Date
-  +totalCredits: Decimal
-  +totalDebits: Decimal
 }
 
 class ReleveBancaire {
@@ -101,18 +106,16 @@ class ProduitCredit {
 
 '===============================================
 
-Client "1" -- "1..*" CompteBancaire
+Client "1" -- "1..*" Compte
 
-CompteBancaire "1" -- "0..*" Transaction
-CompteBancaire "1" -- "0..*" ReleveBancaire
-CompteBancaire "1" -- "0..1" ProduitCredit
-CompteBancaire "1" -- "0..*" ClotureJournaliere
+Compte "1" -- "0..*" Transaction
+Compte "1" -- "0..*" ReleveBancaire
+Compte "1" -- "0..1" ProduitCredit
 
-Transaction <|-- Virement
+Compte "1" -- "0..*" Virement
+
 Transaction <|-- PaiementFacture
 Transaction "1" -- "0..1" ControleAML
 Transaction "1" -- "0..*" JournalAudit
-
-ClotureJournaliere "1" -- "0..*" ReleveBancaire
 
 @enduml

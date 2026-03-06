@@ -3,76 +3,62 @@ title BankSimple - Diagramme de Composants (UC-01 à UC-05)
 
 left to right direction
 skinparam linetype ortho
+skinparam packageStyle rectangle
 
 package "Api" <<Presentation>> {
-    [ClientController]
-    [AuthController]
-    [AccountController]
-    [PaymentController]
+    [InscriptionController]
+    [AuthenticationController]
+    [CompteController]
+    [VirementController]
 }
 
 package "Application" <<Use Cases>> {
-    package "Commands" {
-        [WriteClient]
-        [WriteAuthentification]
-        [WriteAccount]
-        [WriteVirement]
-    }
-    package "Queries" {
-        [ReadClient]
-        [ReadAccountBalance]
-        [ReadTransactions]
-    }
+    [InscriptionService]
+    [AuthenticationService]
+    [CompteService]
+    [VirementService]
 }
 
 package "Domain" <<Core>> {
     [Client]
-    [CompteBancaire]
+    [Compte]
     [Virement]
     [Transaction]
 }
 
 package "Infrastructure" <<Persistence>> {
     [ClientRepository]
-    [AuthRepository]
-    [AccountRepository]
+    [CompteRepository]
     [TransactionRepository]
     database [DbContext]
 }
 
-' UC-01/02 — Auth
-[AuthController] --> [WriteAuthentification]
-[WriteAuthentification] --> [Client]
-[WriteAuthentification] --> [AuthRepository]
+Domain -[hidden]down-> Infrastructure
 
 ' UC-01 — Inscription
-[ClientController] --> [WriteClient]
-[WriteClient] --> [Client]
-[WriteClient] --> [ClientRepository]
-[ClientController] --> [ReadClient]
-[ReadClient] --> [ClientRepository]
+[InscriptionController] --> [InscriptionService]
+[InscriptionService] --> [Client]
+[InscriptionService] --> [ClientRepository]
 
-' UC-03 — Ouverture de compte
-[AccountController] --> [WriteAccount]
-[WriteAccount] --> [CompteBancaire]
-[WriteAccount] --> [AccountRepository]
+' UC-02 — Authentification
+[AuthenticationController] --> [AuthenticationService]
+[AuthenticationService] --> [Client]
+[AuthenticationService] --> [ClientRepository]
 
-' UC-04 — Consultation
-[AccountController] --> [ReadAccountBalance]
-[ReadAccountBalance] --> [AccountRepository]
-[AccountController] --> [ReadTransactions]
-[ReadTransactions] --> [TransactionRepository]
+' UC-03 & UC-04 — Compte
+[CompteController] --> [CompteService]
+[CompteService] --> [Compte]
+[CompteService] --> [CompteRepository]
 
 ' UC-05 — Virement
-[PaymentController] --> [WriteVirement]
-[WriteVirement] --> [Virement]
-[WriteVirement] --> [Transaction]
-[WriteVirement] --> [TransactionRepository]
+[VirementController] --> [VirementService]
+[VirementService] --> [Virement]
+[VirementService] --> [Transaction]
+[VirementService] --> [TransactionRepository]
 
 ' Infrastructure
 [ClientRepository] --> [DbContext]
-[AuthRepository] --> [DbContext]
-[AccountRepository] --> [DbContext]
+[CompteRepository] --> [DbContext]
 [TransactionRepository] --> [DbContext]
 
 @enduml

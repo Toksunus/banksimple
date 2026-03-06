@@ -1,12 +1,12 @@
 @startuml deployment
 title BankSimple - Diagramme de Déploiement (Microservices)
 
-node "Conteneur Load Balancer" {
-  component "NGINX" <<Load Balancer>> as LB
-}
-
 node "Conteneur API Gateway" {
   component "Kong" <<API Gateway>> as Gateway
+}
+
+node "Conteneur Load Balancer" {
+  component "NGINX" <<Load Balancer>> as LB
 }
 
 node "Conteneur Observabilité" {
@@ -43,11 +43,11 @@ node "Conteneur Cache" {
   database "Redis" <<Cache>> as Cache
 }
 
-LB --> Gateway : HTTP
-Gateway --> Client_API : HTTP
-Gateway --> Account_API : HTTP
-Gateway --> Payment_API : HTTP
-Gateway --> Compliance_API : HTTP
+Gateway --> LB : HTTP
+LB --> Client_API : HTTP
+LB --> Account_API : HTTP
+LB --> Payment_API : HTTP
+LB --> Compliance_API : HTTP
 
 Prometheus ..> Client_API : <<scrape>>
 Prometheus ..> Account_API : <<scrape>>
