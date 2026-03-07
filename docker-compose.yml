@@ -8,7 +8,7 @@ services:
     command: redis-server --save "" --appendonly no
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 1m
+      interval: 10s
       timeout: 10s
       retries: 5
       start_period: 10s
@@ -28,7 +28,7 @@ services:
       - ./postgres-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U banksimple -d banksimple"]
-      interval: 1m
+      interval: 10s
       timeout: 10s
       retries: 5
       start_period: 10s
@@ -48,11 +48,13 @@ services:
     build:
       context: .
       dockerfile: src/services/ClientService/Dockerfile
+    ports:
+      - "5001:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__Default: "Host=postgres;Port=5432;Database=banksimple_clients;Username=banksimple;Password=banksimple"
-      Jwt__Secret: "SecretBankSimpleKey"
+      Jwt__Secret: "BankSimple2026SuperSecretJwtKey!!"
       Jwt__Issuer: "BankSimple"
       Jwt__Audience: "BankSimpleClients"
       Jwt__ExpirationHours: "4"
@@ -64,7 +66,7 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "bash -c '</dev/tcp/localhost/8080' && echo ok || exit 1"]
-      interval: 1m
+      interval: 10s
       timeout: 10s
       retries: 5
       start_period: 10s
@@ -73,11 +75,13 @@ services:
     build:
       context: .
       dockerfile: src/services/AccountService/Dockerfile
+    ports:
+      - "5002:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__Default: "Host=postgres;Port=5432;Database=banksimple_accounts;Username=banksimple;Password=banksimple"
-      Jwt__Secret: "SecretBankSimpleKey"
+      Jwt__Secret: "BankSimple2026SuperSecretJwtKey!!"
       Jwt__Issuer: "BankSimple"
       Jwt__Audience: "BankSimpleClients"
       Jwt__ExpirationHours: "4"
@@ -89,7 +93,7 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "bash -c '</dev/tcp/localhost/8080' && echo ok || exit 1"]
-      interval: 1m
+      interval: 10s
       timeout: 10s
       retries: 5
       start_period: 10s
@@ -98,11 +102,13 @@ services:
     build:
       context: .
       dockerfile: src/services/PaymentService/Dockerfile
+    ports:
+      - "5003:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__Default: "Host=postgres;Port=5432;Database=banksimple_payments;Username=banksimple;Password=banksimple"
-      Jwt__Secret: "SecretBankSimpleKey"
+      Jwt__Secret: "BankSimple2026SuperSecretJwtKey!!"
       Jwt__Issuer: "BankSimple"
       Jwt__Audience: "BankSimpleClients"
       Jwt__ExpirationHours: "4"
@@ -115,7 +121,7 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "bash -c '</dev/tcp/localhost/8080' && echo ok || exit 1"]
-      interval: 1m
+      interval: 10s
       timeout: 10s
       retries: 5
       start_period: 10s
