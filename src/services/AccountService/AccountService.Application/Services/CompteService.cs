@@ -22,6 +22,10 @@ public class CompteService
 
     public async Task<Compte> CreerCompteAsync(CompteRequest command)
     {
+        var existing = await _compteRepository.GetByClientIdAsync(command.ClientId);
+        if (existing.Any(c => c.Type == command.Type.ToString()))
+            throw new Exception($"Vous avez déjà un compte {command.Type}.");
+
         var compte = new Compte
         {
             CompteId = Guid.NewGuid(),
@@ -43,6 +47,19 @@ public class CompteService
     public async Task<List<Compte>> GetComptesByClientIdAsync(Guid clientId)
     {
         return await _compteRepository.GetByClientIdAsync(clientId);
+    }
+
+    public async Task FermerCompteAsync(Guid compteId, Guid clientId)
+    {
+        var compte = await _compteRepository.GetByIdAsync(compteId);
+        if (compte == null)
+            throw new Exception("Compte introuvable.");
+        if (compte.ClientId != clientId)
+            throw new Exception("Compte introuvable.");
+        if (compte.Solde != 0)
+            throw new Exception("Le solde doit être à 0 avant de fermer le compte.");
+
+        await _compteRepository.DeleteAsync(compteId);
     }
 
     public async Task<Compte> DepotAsync(Guid compteId, decimal montant)

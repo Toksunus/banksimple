@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace AccountService.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
+    [Migration("20260303000000_InitialCreate")]
     public partial class InitialCreate : Migration
     {
         /// <inheritdoc />

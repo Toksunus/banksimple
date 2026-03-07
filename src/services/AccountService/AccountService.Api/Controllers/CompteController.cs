@@ -64,7 +64,8 @@ public class CompteController : ControllerBase
             compte.DateOuverture
         });
 
-        await db.StringSetAsync(cacheKey, JsonSerializer.Serialize(result), TimeSpan.FromSeconds(60));
+        var cacheOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+        await db.StringSetAsync(cacheKey, JsonSerializer.Serialize(result, cacheOptions), TimeSpan.FromSeconds(60));
         return Ok(result);
     }
 
@@ -76,6 +77,21 @@ public class CompteController : ControllerBase
             var compte = await _compteService.DepotAsync(compteId, montant);
             await _redis.GetDatabase().KeyDeleteAsync($"comptes:{clientId}");
             return Ok(new { compte.CompteId, compte.Solde, message = "Dépôt reussis" });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpDelete("{compteId:guid}")]
+    public async Task<IActionResult> FermerCompte(Guid clientId, Guid compteId)
+    {
+        try
+        {
+            await _compteService.FermerCompteAsync(compteId, clientId);
+            await _redis.GetDatabase().KeyDeleteAsync($"comptes:{clientId}");
+            return Ok(new { message = "Compte fermé avec succès." });
         }
         catch (Exception ex)
         {
