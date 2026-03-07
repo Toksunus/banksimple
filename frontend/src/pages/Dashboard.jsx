@@ -88,7 +88,7 @@ export default function Dashboard() {
       setVirements(data);
 
       const uniqueClientIds = [...new Set(
-        data.map(v => v.clientContrepartieId).filter(Boolean)
+        data.map(v => v.titulaireId).filter(Boolean)
       )];
       const nouveaux = uniqueClientIds.filter(id => !clientsNoms[id]);
       if (nouveaux.length > 0) {
@@ -242,8 +242,8 @@ export default function Dashboard() {
                   const estSource = v.compteSourceId === historiqueCompteId;
                   const d = new Date(v.dateVirement);
                   const date = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-                  const nomTitulaire = v.clientContrepartieId
-                    ? (clientsNoms[v.clientContrepartieId] ?? v.clientContrepartieId.slice(0, 8) + '…')
+                  const nomTitulaire = v.titulaireId
+                    ? (clientsNoms[v.titulaireId] ?? v.titulaireId.slice(0, 8) + '…')
                     : '—';
                   return (
                     <tr key={v.virementId}>

@@ -21,6 +21,11 @@ public class VirementService
         _accountServiceClient = accountServiceClient;
     }
 
+    public async Task<List<Virement>> GetByCompteIdAsync(Guid compteId)
+    {
+        return await _virementRepository.GetByCompteIdAsync(compteId);
+    }
+
     public async Task<Virement> EffectuerVirementAsync(VirementRequest command)
     {
         var compteSource = await _accountServiceClient.GetCompteAsync(command.CompteSourceId);
