@@ -15,6 +15,12 @@ public class LoginRequest
     public string MotDePasse { get; set; } = string.Empty;
 }
 
+public class VerifyOtpRequest
+{
+    public Guid ClientId { get; set; }
+    public string OtpCode { get; set; } = string.Empty;
+}
+
 public class AuthenticationService
 {
     private readonly IClientRepository _clientRepository;
@@ -26,7 +32,8 @@ public class AuthenticationService
         _configuration = configuration;
     }
 
-    public async Task<(Session session, string token)> LoginAsync(LoginRequest request)
+    // Vérifie les credentials et retourne le clientId — OTP géré par le contrôleur
+    public async Task<Guid> VerifierCredentialsAsync(LoginRequest request)
     {
         var client = await _clientRepository.GetByLoginAsync(request.Login);
 
@@ -39,6 +46,16 @@ public class AuthenticationService
         if (client.Statut != "Active")
             throw new Exception("Compte non activé. KYC requis.");
 
+        return client.ClientId;
+    }
+
+    // Crée la session et génère le JWT — appelé après vérification OTP par le contrôleur
+    public async Task<(Session session, string token)> CreerSessionAsync(Guid clientId)
+    {
+        var client = await _clientRepository.GetByIdAsync(clientId);
+        if (client == null)
+            throw new Exception("Client introuvable.");
+
         var session = new Session
         {
             SessionId = Guid.NewGuid(),
@@ -48,7 +65,6 @@ public class AuthenticationService
         };
 
         await _clientRepository.CreateSessionAsync(session);
-
         var token = GenererToken(client, session);
         return (session, token);
     }
