@@ -9,6 +9,7 @@ public class PaymentDbContext : DbContext
         : base(options) { }
 
     public DbSet<Virement> Virements { get; set; }
+    public DbSet<AuditLog> AuditLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

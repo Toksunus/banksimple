@@ -12,6 +12,7 @@ public class ClientDbContext : DbContext
     public DbSet<Authentification> Authentifications { get; set; }
     public DbSet<Session> Sessions { get; set; }
     public DbSet<VerificationKYC> VerificationKYCs { get; set; }
+    public DbSet<AuditLog> AuditLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

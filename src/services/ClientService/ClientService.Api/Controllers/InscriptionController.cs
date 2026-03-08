@@ -1,4 +1,6 @@
 using ClientService.Application.Services;
+using ClientService.Domain.Entities;
+using ClientService.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ClientService.Api.Controllers;
@@ -8,10 +10,12 @@ namespace ClientService.Api.Controllers;
 public class InscriptionController : ControllerBase
 {
     private readonly InscriptionService _inscriptionService;
+    private readonly ClientDbContext _db;
 
-    public InscriptionController(InscriptionService inscriptionService)
+    public InscriptionController(InscriptionService inscriptionService, ClientDbContext db)
     {
         _inscriptionService = inscriptionService;
+        _db = db;
     }
 
     [HttpPost("inscription")]
@@ -20,6 +24,10 @@ public class InscriptionController : ControllerBase
         try
         {
             var client = await _inscriptionService.InscrireAsync(inscription);
+
+            await _db.AuditLogs.AddAsync(new AuditLog { Action = "INSCRIPTION", ClientId = client.ClientId, Details = $"Nom={client.Nom}" });
+            await _db.SaveChangesAsync();
+
             return CreatedAtAction(nameof(GetById), new { id = client.ClientId }, new
             {
                 client.ClientId,
@@ -39,6 +47,9 @@ public class InscriptionController : ControllerBase
     {
         var client = await _inscriptionService.ValiderKycAsync(id);
         if (client == null) return NotFound(new { error = "Client n'existe pas." });
+
+        await _db.AuditLogs.AddAsync(new AuditLog { Action = "KYC_VALIDE", ClientId = client.ClientId, Details = $"Statut={client.Statut}" });
+        await _db.SaveChangesAsync();
 
         return Ok(new
         {

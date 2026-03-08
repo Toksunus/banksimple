@@ -32,7 +32,6 @@ public class AuthenticationService
         _configuration = configuration;
     }
 
-    // Vérifie les credentials et retourne le clientId — OTP géré par le contrôleur
     public async Task<Guid> VerifierCredentialsAsync(LoginRequest request)
     {
         var client = await _clientRepository.GetByLoginAsync(request.Login);
@@ -49,7 +48,6 @@ public class AuthenticationService
         return client.ClientId;
     }
 
-    // Crée la session et génère le JWT — appelé après vérification OTP par le contrôleur
     public async Task<(Session session, string token)> CreerSessionAsync(Guid clientId)
     {
         var client = await _clientRepository.GetByIdAsync(clientId);
