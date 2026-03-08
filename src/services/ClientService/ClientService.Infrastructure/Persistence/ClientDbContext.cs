@@ -22,7 +22,7 @@ public class ClientDbContext : DbContext
         {
             entity.HasKey(c => c.ClientId);
             entity.Property(c => c.Nom).IsRequired().HasMaxLength(100);
-            entity.Property(c => c.Adresse).IsRequired().HasMaxLength(255);
+            entity.Property(c => c.Email).IsRequired().HasMaxLength(255);
             entity.Property(c => c.NasSimule).IsRequired().HasMaxLength(11);
             entity.Property(c => c.Statut).IsRequired().HasMaxLength(50);
         });

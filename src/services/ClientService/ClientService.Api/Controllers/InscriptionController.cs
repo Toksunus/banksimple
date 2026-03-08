@@ -80,7 +80,7 @@ public class InscriptionController : ControllerBase
         {
             client.ClientId,
             client.Nom,
-            client.Adresse,
+            client.Email,
             client.Statut,
             kyc
         });

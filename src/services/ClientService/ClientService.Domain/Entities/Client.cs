@@ -4,7 +4,7 @@ public class Client
 {
     public Guid ClientId { get; set; }
     public string Nom { get; set; } = string.Empty;
-    public string Adresse { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
     public string NasSimule { get; set; } = string.Empty;
     public string Statut { get; set; } = "Pending";
 
