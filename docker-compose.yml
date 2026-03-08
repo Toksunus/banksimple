@@ -48,8 +48,8 @@ services:
     build:
       context: .
       dockerfile: src/services/ClientService/Dockerfile
-    ports:
-      - "5001:8080"
+    deploy:
+      replicas: 1   # changer ici pour scaler : 1, 2, 3, 4
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
@@ -75,8 +75,8 @@ services:
     build:
       context: .
       dockerfile: src/services/AccountService/Dockerfile
-    ports:
-      - "5002:8080"
+    deploy:
+      replicas: 1   # changer ici pour scaler : 1, 2, 3, 4
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
@@ -102,8 +102,8 @@ services:
     build:
       context: .
       dockerfile: src/services/PaymentService/Dockerfile
-    ports:
-      - "5003:8080"
+    deploy:
+      replicas: 1   # changer ici pour scaler : 1, 2, 3, 4
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080

@@ -1,0 +1,121 @@
+@startuml class
+title BankSimple - Modèle de Domaine (MDD)
+
+class Client {
+  +clientId: UUID
+  +nom: String
+  +adresse: String
+  +nasSimule: String
+  +statut: String
+  ' Pending | Active | Rejected
+}
+
+'===============================================
+
+class Authentification {
+  +authentificationId: UUID
+  +login: String
+  +motDePasse: String
+  +mfaActive: Boolean
+}
+
+Client "1" -- "1" Authentification
+
+'===============================================
+
+class Session {
+  +sessionId: UUID
+  +dateCreation: DateTime
+  +dateExpiration: DateTime
+}
+
+Client "1" -- "0..*" Session
+
+'===============================================
+
+class VerificationKYC {
+  +verificationKYCId: UUID
+  +dateVerification: Date
+  +resultat: String
+  ' Approuve | Rejete
+}
+
+Client "1" -- "1" VerificationKYC
+
+'===============================================
+
+class Compte {
+  +compteId: UUID
+  +type: String
+  ' Cheque | Epargne
+  +solde: Decimal
+  +dateOuverture: DateTime
+  +statut: String
+  ' Actif | Ferme
+}
+
+class Virement {
+  +virementId: UUID
+  +compteSourceId: UUID
+  +compteDestinataireId: UUID
+  +montant: Decimal
+  +dateVirement: DateTime
+  +statut: String
+  ' Suspect | Effectué | Echoué
+}
+
+class Transaction {
+  +transactionId: UUID
+  +type: String
+  +montant: Decimal
+  +dateTransaction: DateTime
+  +description: String
+}
+
+class ControleAML {
+  +controleId: UUID
+  +niveauRisque: String
+  ' Faible | Eleve
+  +dateAnalyse: DateTime
+}
+
+class PaiementFacture {
+  +fournisseur: String
+  +referenceFacture: String
+}
+
+class JournalAudit {
+  +journalId: UUID
+  +dateAction: DateTime
+  +action: String
+  +acteur: String
+}
+
+class ReleveBancaire {
+  +releveId: UUID
+  +periode: Date
+  +dateGeneration: Date
+}
+
+class ProduitCredit {
+  +creditId: UUID
+  +montantAutorise: Decimal
+  +tauxInteret: Float
+  +soldeUtilise: Decimal
+}
+
+'===============================================
+
+Client "1" -- "1..*" Compte
+
+Compte "1" -- "0..*" Transaction
+Compte "1" -- "0..*" ReleveBancaire
+Compte "1" -- "0..1" ProduitCredit
+
+Compte "1" -- "0..*" Virement
+
+Transaction <|-- PaiementFacture
+Transaction "1" -- "0..1" ControleAML
+Transaction "1" -- "0..*" JournalAudit
+
+@enduml

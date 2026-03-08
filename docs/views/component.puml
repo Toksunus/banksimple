@@ -1,0 +1,64 @@
+@startuml composant
+title BankSimple - Diagramme de Composants (UC-01 à UC-05)
+
+left to right direction
+skinparam linetype ortho
+skinparam packageStyle rectangle
+
+package "Api" <<Presentation>> {
+    [InscriptionController]
+    [AuthenticationController]
+    [CompteController]
+    [VirementController]
+}
+
+package "Application" <<Use Cases>> {
+    [InscriptionService]
+    [AuthenticationService]
+    [CompteService]
+    [VirementService]
+}
+
+package "Domain" <<Core>> {
+    [Client]
+    [Compte]
+    [Virement]
+    [Transaction]
+}
+
+package "Infrastructure" <<Persistence>> {
+    [ClientRepository]
+    [CompteRepository]
+    [TransactionRepository]
+    database [DbContext]
+}
+
+Domain -[hidden]down-> Infrastructure
+
+' UC-01 — Inscription
+[InscriptionController] --> [InscriptionService]
+[InscriptionService] --> [Client]
+[InscriptionService] --> [ClientRepository]
+
+' UC-02 — Authentification
+[AuthenticationController] --> [AuthenticationService]
+[AuthenticationService] --> [Client]
+[AuthenticationService] --> [ClientRepository]
+
+' UC-03 & UC-04 — Compte
+[CompteController] --> [CompteService]
+[CompteService] --> [Compte]
+[CompteService] --> [CompteRepository]
+
+' UC-05 — Virement
+[VirementController] --> [VirementService]
+[VirementService] --> [Virement]
+[VirementService] --> [Transaction]
+[VirementService] --> [TransactionRepository]
+
+' Infrastructure
+[ClientRepository] --> [DbContext]
+[CompteRepository] --> [DbContext]
+[TransactionRepository] --> [DbContext]
+
+@enduml

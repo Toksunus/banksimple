@@ -19,7 +19,7 @@ routes:
 plugins:
   - name: rate-limiting
     config:
-      minute: 1800
+      minute: 50000
       policy: local
   - name: cors
     config:
