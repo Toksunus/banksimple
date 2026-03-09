@@ -13,13 +13,13 @@ jobs:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_USER: ${{ secrets.DB_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: banksimple2026
           POSTGRES_DB: banksimple
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U ${{ secrets.DB_USER }}"
+          --health-cmd="pg_isready -U postgres"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
@@ -59,9 +59,9 @@ jobs:
 
       - name: Run tests
         env:
-          ConnectionStrings__Default: "Host=127.0.0.1;Port=5432;Database=banksimple;Username=${{ secrets.DB_USER }};Password=${{ secrets.DB_PASSWORD }}"
+          ConnectionStrings__Default: "Host=127.0.0.1;Port=5432;Database=banksimple;Username=postgres;Password=banksimple2026"
           Jwt__Secret: ${{ secrets.JWT_SECRET }}
           Jwt__Issuer: "BankSimple"
           Jwt__Audience: "BankSimpleClients"
           Redis__ConnectionString: "127.0.0.1:6379"
-        run: dotnet test Banksimple.sln --no-build -c Release --verbosity normal
+        run: dotnet test tests/ --verbosity normal
