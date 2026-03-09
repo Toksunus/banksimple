@@ -16,11 +16,11 @@ async function handleResponse(res) {
   return data;
 }
 
-export async function inscrireClient(nom, adresse, nasSimule, motDePasse) {
+export async function inscrireClient(nom, email, nasSimule, motDePasse) {
   const res = await fetch(`${BASE}/clients/inscription`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ nom, adresse, nasSimule, motDePasse }),
+    body: JSON.stringify({ nom, email, nasSimule, motDePasse }),
   });
   return handleResponse(res);
 }

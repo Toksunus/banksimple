@@ -16,25 +16,25 @@
 
 | Critère | Pondération | Réalisations |
 |---------|:-----------:|---|
-| **1. Analyse métier & DDD** | 15 % | 6 UC implémentés, Clean Architecture + DDD, bounded contexts isolés |
-| **2. API REST & Sécurité** | 15 % | Endpoints versionnés `/api/v1`, JWT + MFA (OTP Redis), CORS Kong, Swagger, Postman |
-| **3. Persistance & Intégrité** | 15 % | 3 BDs PostgreSQL isolées, EF Core, audit logs append-only, idempotence Redis (24h) |
+| **1. Analyse métier & DDD** | 15 % | 5 UC implémentés, Clean Architecture + DDD, bounded contexts isolés |
+| **2. API REST & Sécurité** | 15 % | Endpoints versionnés /api/v1, JWT + MFA (OTP Redis), CORS Kong, Swagger, Postman |
+| **3. Persistance & Intégrité** | 15 % | 3 BDs PostgreSQL isolées, EF Core, audit logs append-only, idempotence|
 | **4. Observabilité & Charge** | 20 % | 4 Golden Signals Grafana, k6 load-test (N=1–4) + stress test + kill instance |
-| **5. LB & Caching** | 10 % | nginx `least_conn`, cache Redis OTP (5 min) + comptes (60 s), gains mesurés |
-| **6. Microservices & Gateway** | 15 % | 3 microservices, Kong (routage, CORS, rate limiting, Prometheus), docker-compose scalable |
+| **5. LB & Caching** | 10 % | nginx least_conn, cache Redis OTP (5 min), gains mesurés |
+| **6. Microservices & Gateway** | 15 % | 3 microservices, Kong (routage, CORS, rate limiting, Prometheus)|
 | **7. Doc & Décisions** | 10 % | Arc42 (§§ 1–12), 4+1 (5 vues PlantUML), 5 ADRs, README |
 
 <div style="page-break-before: always;"></div>
 
 ## Introduction
 
-Ce projet représente la conception et l'implémentation complète d'une plateforme bancaire en ligne, BankSimple, développée dans le cadre du cours GTI611. Partant d'une analyse du domaine bancaire canadien et de ses exigences réglementaires (FINTRAC, OSFI, LPRPDE), j'ai progressivement élaboré une architecture capable de répondre aux impératifs de sécurité, de performance et de disponibilité propres au secteur financier.
+Ce projet représente la conception et l'implémentation complète d'une plateforme bancaire en ligne, BankSimple. Partant d'une analyse du domaine bancaire canadien et de ses exigences réglementaires (FINTRAC, OSFI, LPRPDE), j'ai élaboré une architecture capable de répondre aux règlements de sécurité et de performance.
 
-La phase 1 avait comme point de départ la modélisation des cas d'utilisation fondamentaux : inscription et vérification d'identité (KYC), authentification multi-facteurs, gestion de comptes et virements avec détection automatique de blanchiment d'argent (AML). Cette compréhension du domaine a guidé chaque décision architecturale, depuis le choix de la Clean Architecture avec DDD jusqu'à la décomposition en microservices indépendants.
+La phase 1 avait comme point de départ la modélisation des cas d'utilisation fondamentaux : inscription et vérification d'identité (KYC), authentification, gestion de comptes et virements avec détection AML. C'est cette analyse du domaine qui m'a convaincu d'adopter la Clean Architecture avec DDD et de découper le système en microservices indépendants.
 
-Mon objectif principal était d'exposer une API RESTful sécurisée et observable, tout en démontrant des gains mesurables sur la latence, le débit et la disponibilité. Pour ce faire, j'ai mis en place une chaîne d'observabilité complète (Prometheus + Grafana) permettant de visualiser les 4 Golden Signals en temps réel, et instrumenté l'API avec des scénarios de charge réalistes à l'aide de k6. Le défi majeur consistait à maintenir la stabilité du service sous perturbations — simulées par l'arrêt forcé d'instances en cours d'exécution — tout en garantissant un taux d'erreurs inférieur à 1 %.
+Mon objectif principal était d'exposer une API RESTful, tout en démontrant des gains mesurables sur la latence, le débit et la disponibilité. Pour ça, j'ai mis en place plusieurs outils d'observabilité (Prometheus + Grafana) permettant de visualiser les 4 Golden Signals en temps réel, ce qui m'a permis de créer des scénarios de charge réalistes pour tester la stabilité de l'architecture.
 
-En résumé, ce projet démontre qu'une architecture microservices bien conçue, orchestrée par une API Gateway (Kong) et équilibrée par un load balancer (nginx), peut atteindre des objectifs de performance et de résilience dignes d'un environnement bancaire de production, et ce, de manière reproductible en une seule commande.
+Ce que ce projet m'a montré, c'est qu'avec les bons outils (Kong, nginx, Prometheus) bien assemblés, une architecture microservices peut être à la fois performante, résiliente et déployable en une commande.
 
 <div style="page-break-before: always;"></div>
 
@@ -61,10 +61,10 @@ En résumé, ce projet démontre qu'une architecture microservices bien conçue,
 | 6 | **Reproductibilité** | Déploiement complet en une commande `docker compose up --build` en < 5 minutes |
 
 ### Parties prenantes
-- **Clients bancaires** : Utilisateurs finaux gérant leurs comptes, effectuant des virements et consultant leurs soldes via l'API
-- **Régulateurs (FINTRAC, OSFI)** : Auditabilité des virements, conformité AML, journaux immuables
-- **Équipe de développement** : Maintenabilité, testabilité indépendante par service, évolutivité
-- **Opérations / DevOps** : Observabilité temps réel, déploiement reproductible, haute disponibilité par réplication
+- **Clients bancaires** : Ils gèrent leurs comptes, font des virements et consultent leurs soldes via l'API
+- **Régulateurs (FINTRAC, OSFI)** : Ils ont besoin de journaux d'audit immuables et d'une détection AML conforme
+- **Développeurs** : Le code doit être testable par service et facile à modifier sans tout casser
+- **DevOps** : Le système doit être observable en temps réel et redéployable en une commande
 
 <div style="page-break-before: always;"></div>
 
@@ -72,12 +72,12 @@ En résumé, ce projet démontre qu'une architecture microservices bien conçue,
 
 | Contrainte | Description |
 |------------|-------------|
-| **Technologie** | C# / .NET 8, PostgreSQL 16, Redis 7, Kong 3.6, nginx alpine, Docker |
-| **Déploiement** | Conteneurs Docker orchestrés par docker-compose, communication réseau interne |
-| **Performance** | Latence P95 ≤ 500 ms, débit ≥ 600 ops/s (exigences NFR du cahier de charge) |
+| **Technologie** | C# / .NET 8, PostgreSQL, Redis, Kong, nginx, Docker |
+| **Déploiement** | Conteneurs Docker orchestrés par docker-compose, CI/CD self-hosted runner |
+| **Performance** | Latence P95 ≤ 500 ms |
 | **Sécurité** | JWT Bearer HS256, MFA par OTP (Redis TTL 5 min), validation des entrées, CORS via Kong |
-| **Conformité** | Détection AML (seuil 10 000 CAD, > 60% du solde), journaux append-only |
-| **API** | Routes versionnées `/api/v1`, codes HTTP standards, erreurs JSON normalisées, Swagger publié |
+| **Conformité** | Détection AML, journaux append-only |
+| **API** | Routes versionnées `/api/v1`, codes HTTP standards, Swagger |
 | **API Gateway** | Kong comme point d'entrée unique pour le routage, rate limiting et métriques agrégées |
 
 ## 3. Portée et contexte du système
@@ -90,15 +90,15 @@ Le système permet aux clients bancaires de :
 - S'authentifier de façon sécurisée avec JWT et validation MFA par code OTP
 - Ouvrir et gérer des comptes bancaires (chèques ou épargne)
 - Consulter leurs soldes et l'historique de leurs transactions
-- Effectuer des virements inter-comptes avec contrôle AML automatique
+- Effectuer des virements vers des comptes internes ou externes avec contrôle AML automatique
 
 ### Contexte technique
-- **Applications clientes** : Postman, frontend web (React/Vite), applications mobiles
-- **API Gateway** : Kong sur le port 8090, point d'entrée unique pour toutes les requêtes
-- **Load Balancer** : nginx avec upstream `least_conn` pour distribuer la charge entre les réplicas
-- **Microservices** : ClientService, AccountService, PaymentService — chacun sur le port 8080 interne
+- **Applications clientes** : Postman, frontend web (React)
+- **API Gateway** : Kong, point d'entrée unique pour toutes les requêtes
+- **Load Balancer** : nginx avec upstream `least_conn` afin de distribuer la charge
+- **Microservices** : ClientService, AccountService, PaymentService
 - **Persistance** : Trois bases PostgreSQL isolées (une par service) + Redis pour les codes OTP
-- **Observabilité** : Prometheus scrape `/metrics` de chaque service, Grafana visualise les 4 Golden Signals
+- **Observabilité** : Prometheus collecte `/metrics` de chaque service, Grafana visualise les 4 Golden Signals
 
 <div style="page-break-before: always;"></div>
 
@@ -106,14 +106,14 @@ Le système permet aux clients bancaires de :
 
 | Problème | Approche choisie | Pourquoi |
 |----------|-----------------|----------|
-| **Isolation des domaines** | Clean Architecture — le domaine ne dépend d'aucune technologie externe | Permet de tester la logique métier sans base de données et de changer l'infrastructure sans toucher au domaine |
-| **Scalabilité par service** | Décomposition en 3 microservices avec `deploy: replicas: N` docker-compose | Chaque service est sous une charge différente — PaymentService ne devrait pas être contraint par AccountService |
-| **Authentification sécurisée** | JWT Bearer + MFA : login renvoie un OTP stocké dans Redis (TTL 5 min) | Un mot de passe seul ne suffit pas dans un contexte bancaire ; l'OTP expire automatiquement sans intervention |
-| **Conformité AML** | Règles métier dans VirementService : seuil 10 000 CAD et > 60% du solde → statut Suspect | La règle est dans le domaine, pas dans le contrôleur — elle est testable et ne dépend pas d'HTTP |
-| **Observabilité uniforme** | Middleware prometheus-net dans chaque service, dashboard Grafana centralisé | Sans métriques centralisées, diagnostiquer un problème dans un service parmi trois est difficile |
-| **Point d'entrée unique** | Kong route toutes les requêtes vers nginx qui dispatche vers les services appropriés | Le client n'a pas besoin de connaître l'adresse de chaque service — Kong centralise CORS, rate limiting et métriques |
-| **Load balancing** | nginx upstream avec `least_conn` distribue les requêtes équitablement entre les réplicas | `least_conn` envoie la requête au replica le moins occupé, ce qui évite de surcharger un seul conteneur |
-| **Isolation des données** | Chaque microservice possède sa propre base PostgreSQL — pas de couplage entre services | Une base partagée crée des dépendances implicites entre domaines et empêche le déploiement indépendant |
+| **Isolation des domaines** | Clean Architecture, le domaine ne dépend d'aucune technologie externe | Si EF Core ou PostgreSQL change, le domaine ne bouge pas. La logique bancaire (AML, KYC) est testable sans base de données active |
+| **Scalabilité par service** | 3 microservices indépendants dans docker-compose | Les virements et les comptes ne sont pas sous la même charge, je veux pouvoir scaler PaymentService sans toucher aux autres |
+| **Authentification sécurisée** | JWT Bearer + OTP stocké dans Redis (TTL 5 min), vérification en deux étapes | Un mot de passe seul c'est pas assez dans un contexte bancaire. L'OTP expire tout seul après 5 min sans que j'aie à gérer ça manuellement |
+| **Conformité AML** | Règles dans VirementService : > 10 000 CAD ou > 60% du solde → statut Suspect | Règle dans le domaine comme ça elle est testable à part |
+| **Observabilité uniforme** | Middleware prometheus-net dans chaque service, dashboard Grafana centralisé | Avec trois services indépendants, j'avais besoin de tout voir au même endroit |
+| **Point d'entrée unique** | Kong route toutes les requêtes vers nginx qui dispatche vers les services | Le frontend n'a pas besoin de connaître l'adresse de chaque service. Kong gère le CORS, le rate limiting et les métriques une seule fois pour tout |
+| **Load balancing** | nginx upstream least_conn distribue les requêtes | least_conn envoie chaque requête au replica le moins occupé |
+| **Isolation des données** | Chaque service a sa propre base PostgreSQL, aucune jointure inter-services | Une base partagée crée des dépendances entre domaines et empêche le déploiement indépendant |
 
 <div style="page-break-before: always;"></div>
 
@@ -127,7 +127,7 @@ Le système permet aux clients bancaires de :
 ### Composants clés
 - **ClientService** : Inscription, validation KYC, authentification JWT, génération et vérification OTP (Redis)
 - **AccountService** : Gestion des comptes bancaires, dépôts, consultation des soldes et historiques
-- **PaymentService** : Virements inter-comptes, détection AML, journal des transactions
+- **PaymentService** : Virements, détection AML, journal des transactions
 - **Kong** : API Gateway — routage, CORS, rate limiting (50 000 req/min), plugin Prometheus
 - **nginx** : Load balancer — upstream least_conn, proxy vers les 3 services
 - **Redis** : Cache des codes OTP (TTL 5 min), nettoyage automatique après vérification
@@ -179,18 +179,16 @@ Le système permet aux clients bancaires de :
 <div style="page-break-before: always;"></div>
 
 ## 8. Concepts transversaux
-- **Clean Architecture** : Dépendances dirigées vers l'intérieur — le domaine ignore EF Core et ASP.NET, ce qui le rend testable indépendamment
-- **Authentification MFA** : Flux en deux étapes — login → OTP Redis → JWT final. L'OTP expire après 5 minutes, ce qui limite la fenêtre d'attaque
-- **Détection AML** : Logique métier dans le domaine, pas dans les contrôleurs — un virement > 10 000 CAD ou > 60% du solde est automatiquement marqué Suspect
-- **Transactions ACID** : `BeginTransactionAsync` / `CommitAsync` / `RollbackAsync` garantissent qu'un virement est atomique — les deux opérations réussissent ou aucune ne s'applique
-- **Observabilité transversale** : Middleware prometheus-net injecté sans modifier le code métier — les métriques sont collectées automatiquement sur chaque requête HTTP
-- **Load balancing** : nginx least_conn envoie chaque nouvelle requête au replica le moins occupé, ce qui évite de surcharger un seul conteneur sous pic de charge
-- **API Gateway Pattern** : Kong centralise CORS, rate limiting et métriques en un seul endroit — aucun service n'a besoin de reconfigurer ces préoccupations lui-même
-- **Database per Service** : Chaque microservice possède sa propre base, ce qui empêche les jointures inter-services et permet de modifier le schéma d'un service sans affecter les autres
-- **Cache-aside** : Redis stocke les OTP avec un TTL de 5 minutes — à l'expiration, Redis les supprime automatiquement sans intervention
+
+| Concept | Description | Pourquoi |
+|---------|-------------|----------|
+| **Audit logs append-only** | Chaque action sensible (inscription, login, virement) est enregistrée dans une table `AuditLogs` dans les trois services | Traçabilité complète pour la conformité FINTRAC — les logs ne sont jamais modifiés |
+| **Idempotence des virements** | Le contrôleur vérifie une clé `Idempotency-Key` dans Redis avant de traiter un virement | Évite les doublons si le client renvoie la même requête après un timeout |
+| **Format d'erreur uniforme** | Tous les contrôleurs retournent `{ "error": "message" }` avec le bon code HTTP (400, 401, 404) | Le frontend peut gérer les erreurs de façon identique peu importe le service qui répond |
+| **Swagger activé sur les trois services** | Chaque service expose `/swagger` avec la documentation complète de ses endpoints | Facilite les tests manuels et sert de contrat d'API sans documentation externe |
 
 ## 9. Décisions d'architecture
-Veuillez consulter les fichiers dans `/docs/adr/` :
+Voir `/docs/adr/` :
 - [ADR-001](../adr/ADR-001-architecture-style.md) — Clean Architecture avec DDD
 - [ADR-002](../adr/ADR-002-persistance-ef-postgresql.md) — PostgreSQL + Entity Framework Core
 - [ADR-003](../adr/ADR-003-observabilite-prometheus-serilog.md) — Prometheus + Grafana + Serilog
@@ -203,13 +201,13 @@ Veuillez consulter les fichiers dans `/docs/adr/` :
 
 ### Sécurité
 - JWT Bearer HS256 avec expiration configurable (4h par défaut)
-- MFA obligatoire : le JWT n'est émis qu'après validation du code OTP — un mot de passe seul ne suffit pas
-- Détection AML : virements > 10 000 CAD ou > 60% du solde marqués comme `Suspect`, ce qui correspond aux exigences FINTRAC
+- MFA obligatoire : le JWT n'est émis qu'après validation du code OTP, un mot de passe seul ne suffit pas
+- Détection AML : virements > 10 000 CAD ou > 60% du solde marqués comme Suspect
 - CORS centralisé dans Kong, ce qui évite toute duplication de configuration entre les services
 
 ### Performance
 
-#### Test de charge progressif (k6 — `ramping-vus`, 5 → 15 VUs, 3m30s)
+#### Test de charge progressif (k6, 5 → 15 VUs, 3m30s)
 
 Distribution des requêtes : 60 % lectures comptes, 20 % dépôts, 20 % virements.
 
@@ -220,7 +218,6 @@ Distribution des requêtes : 60 % lectures comptes, 20 % dépôts, 20 % virement
 | 3 | ~25 ms | ~50 ms | 0 % | ~13 req/s |
 | 4 | ~60 ms | ~115 ms | 0 % | ~9 req/s |
 
-> N=3 et N=4 affichent un débit réduit en raison des ressources limitées de la machine locale (12 conteneurs .NET simultanés). Aucune erreur n'a été observée sur l'ensemble des scénarios — le système reste stable dans tous les cas.
 
 **Captures Grafana :**
 
@@ -242,7 +239,7 @@ N=4 — 4 replicas par service :
 
 <div style="page-break-before: always;"></div>
 
-#### Test de stress (k6 — `ramping-arrival-rate`, spike 5 → 60 req/s)
+#### Test de stress (k6, spike 5 → 60 req/s)
 
 | Métrique | Valeur observée | Seuil NFR |
 |----------|:--------------:|:---------:|
@@ -251,7 +248,7 @@ N=4 — 4 replicas par service :
 | Taux d'erreurs | 0 % | ≤ 5 % ✓ |
 | Pic absorbé | ~40 req/s | — |
 
-Le système a absorbé un pic de 60 req/s cible sans aucune erreur. La latence augmente légèrement sous spike (~15 ms → ~55 ms P95) puis se stabilise — comportement attendu et sain.
+Le système a absorbé un pic de 60 req/s cible sans aucune erreur. La latence augmente légèrement sous spike puis se stabilise, c'est un comportement normal.
 
 **Capture Grafana — stress test :**
 ![Stress test](../images/stress-test.png)
@@ -260,7 +257,7 @@ Le système a absorbé un pic de 60 req/s cible sans aucune erreur. La latence a
 
 #### Test de tolérance aux pannes (kill d'instances sous charge)
 
-Scénario : load-test en cours (N=2) → suppression simultanée de toutes les instances `-2` de chaque service en pleine charge.
+Scénario : load-test en cours (N=2)
 
 | Métrique | Valeur observée | Interprétation |
 |----------|:--------------:|----------------|
@@ -270,7 +267,7 @@ Scénario : load-test en cours (N=2) → suppression simultanée de toutes les i
 | P99 global | 3.14 s | Gonflé par les 3 timeouts du kill |
 | Succès total | **99.88 %** | nginx a redirigé instantanément |
 
-Seules les 3 requêtes en cours d'exécution au moment du `docker stop` ont échoué. Toutes les requêtes suivantes ont été automatiquement redirigées vers les instances survivantes par nginx `least_conn` — aucune interruption visible pour le reste du trafic.
+Seules les 3 requêtes en cours d'exécution au moment du docker stop ont échoué. Toutes les requêtes suivantes ont été automatiquement redirigées vers les instances survivantes par nginx least_conn.
 
 **Capture Grafana — tolérance aux pannes :**
 ![Kill instance](../images/kill-instance.png)
@@ -279,22 +276,20 @@ Seules les 3 requêtes en cours d'exécution au moment du `docker stop` ont éch
 
 ### Observabilité
 - 4 Golden Signals disponibles en temps réel pour chaque service dans Grafana
-- Logs JSON structurés (Serilog) avec TraceId, StatusCode et durée par requête — ce qui permet de corréler une requête précise avec ses logs
+- Logs JSON structurés (Serilog), StatusCode et durée par requête
 - Métriques Kong (requêtes, latence, erreurs) intégrées au même dashboard Prometheus
 
 ### Scalabilité
 - Chaque microservice est répliqué indépendamment : `docker compose up --scale account-service=4`
-- nginx upstream s'adapte automatiquement aux nouveaux conteneurs via DNS Docker interne
 
-## 11. Risques et dettes techniques
+## 11. Risques
 
-| Risque | Impact | Mitigation |
+| Risque | Impact | Amélioration |
 |--------|--------|------------|
-| **Cohérence inter-services** | PaymentService appelle AccountService en HTTP — pas de transaction distribuée | Idempotence des opérations, rollback manuel en cas d'échec partiel |
-| **Sécurité des mots de passe** | Hachage SHA256 utilisé en phase 1 (non recommandé pour la production) | Prévu bcrypt en phase 2 |
-| **Perte du cache Redis** | Redis configuré sans persistance — redémarrage vide le cache OTP | Sessions OTP courtes (5 min) minimisent l'impact ; acceptable en phase 1 |
-| **HTTPS absent** | Communication en HTTP en phase 1 | HTTPS obligatoire avant mise en production |
-| **Tracing distribué absent** | Pas de corrélation de traces entre les 3 services | OpenTelemetry prévu en phase 2 |
+| **Cohérence inter-services** | PaymentService appelle AccountService en HTTP, pas de transaction distribuée | Idempotence des opérations, rollback manuel en cas d'échec partiel |
+| **Sécurité des mots de passe** | Hachage SHA256 utilisé en phase 1 | Passage à bcrypt prévu en phase 2 |
+| **OTP simulé sans livraison réelle** | Le code MFA est retourné directement dans la réponse API en phase 1 | En phase 2, l'OTP sera envoyé par email via un service d'envoi et ne sera plus visible dans le frontend |
+| **Perte du cache Redis** | Redis configuré sans persistance, redémarrage vide le cache OTP | Sessions OTP courtes (5 min) |
 
 <div style="page-break-before: always;"></div>
 
@@ -310,9 +305,9 @@ Seules les 3 requêtes en cours d'exécution au moment du `docker stop` ont éch
 | **JWT** | JSON Web Token : token signé pour l'authentification sans état |
 | **KYC** | Know Your Customer : vérification obligatoire de l'identité d'un client bancaire |
 | **Kong** | API Gateway open-source utilisé pour le routage, rate limiting et CORS |
-| **MFA** | Multi-Factor Authentication : vérification en deux étapes (mot de passe + OTP) |
+| **MFA** | Multi-Factor Authentication : vérification en deux étapes |
 | **nginx** | Serveur web utilisé ici comme load balancer avec l'algorithme least_conn |
-| **OTP** | One-Time Password : code à usage unique stocké dans Redis (TTL 5 min) |
+| **OTP** | One-Time Password : code à usage unique stocké dans Redis |
 | **Rate Limiting** | Limite le nombre de requêtes par minute pour protéger les services |
 | **Redis** | Base de données clé-valeur en mémoire utilisée pour le cache OTP |
 | **Replica** | Instance supplémentaire d'un microservice pour la scalabilité horizontale |
@@ -321,10 +316,10 @@ Seules les 3 requêtes en cours d'exécution au moment du `docker stop` ont éch
 
 ## Conclusion
 
-Ce projet m'a permis de concevoir et d'implémenter une plateforme bancaire complète répondant aux exigences fonctionnelles et non-fonctionnelles du cahier de charge. Pour atteindre les objectifs de performance, j'ai opté pour une décomposition en trois microservices indépendants, chacun doté de sa propre base de données PostgreSQL et orchestrés derrière un load balancer nginx en mode `least_conn`. Cette approche a permis d'atteindre une latence P95 de 25 ms sous charge normale, bien en deçà du seuil de 500 ms fixé.
+Ce projet m'a permis de concevoir et d'implémenter une plateforme bancaire complète répondant aux exigences du cahier de charge. Pour y arriver, j'ai décomposé l'architecture en trois microservices indépendants, chacun avec sa propre base de données PostgreSQL et un load balancer nginx en mode least_conn, ce qui m'a permis d'atteindre une latence stable sous charge normale.
 
-Concernant la disponibilité et la résilience, les tests de tolérance aux pannes ont démontré que le système maintient un taux de succès de 99,88 % même lors de la suppression forcée d'instances en cours d'exécution. Seules les 3 requêtes en vol au moment du kill ont échoué — nginx a redirigé instantanément le trafic vers les instances survivantes, sans intervention manuelle.
+Les tests de tolérance aux pannes ont montré que le système maintient un taux de succès de 99.88 % même lors du kill forcé d'instances en cours d'exécution. Seules les 3 requêtes en vol au moment du kill ont échoué, nginx a redirigé instantanément le trafic vers les instances restantes, sans intervention de ma part.
 
-Sur le plan de la sécurité, j'ai mis en place une authentification en deux étapes (JWT + OTP via Redis) combinée à la détection AML sur les virements suspects. J'ai choisi de centraliser le CORS, le rate limiting et les métriques dans Kong plutôt que dans chaque service — ce qui évite la duplication de configuration et garantit une politique uniforme sur toute l'API.
+Sur le plan de la sécurité, j'ai mis en place une authentification en deux étapes (JWT + OTP via Redis) combinée à la détection AML sur les virements suspects. J'ai choisi de centraliser le CORS, le rate limiting et les métriques dans Kong plutôt que dans chaque service, ce qui m'a évité de dupliquer la configuration.
 
-En résumé, ce projet démontre qu'une architecture microservices rigoureusement documentée (Arc42, ADRs, 4+1), instrumentée pour l'observabilité (Prometheus + Grafana) et validée par des tests de charge réalistes (k6), constitue une fondation fiable pour une application bancaire évolutive et résiliente.
+Partir d'un monolithe et le découper en microservices m'a permis de comprendre pourquoi l'isolation des domaines et des bases de données est essentielle, pas juste en théorie, mais en pratique quand un service tombe et que les autres continuent. La documentation (ADR, arc42, 4+1) m'a énormément aidé à structurer et justifier ces décisions.

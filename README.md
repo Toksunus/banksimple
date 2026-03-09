@@ -113,7 +113,7 @@ Captures Grafana disponibles dans `docs/images/`.
 docker compose up -d --scale client-service=2 --scale account-service=2 --scale payment-service=2
 ```
 
-nginx s'adapte automatiquement aux nouveaux conteneurs via le DNS interne Docker — aucune modification de configuration nécessaire.
+nginx s'adapte automatiquement aux nouveaux conteneurs via le DNS interne Docker — sans toucher à la config.
 
 ## Documentation
 

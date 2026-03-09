@@ -4,7 +4,7 @@ import { inscrireClient } from '../api.js';
 
 export default function Inscription() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ nom: '', adresse: '', nasSimule: '', motDePasse: '' });
+  const [form, setForm] = useState({ nom: '', email: '', nasSimule: '', motDePasse: '' });
   const [msg, setMsg] = useState(null);
   const [erreur, setErreur] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -19,7 +19,7 @@ export default function Inscription() {
     setMsg(null);
     setLoading(true);
     try {
-      const client = await inscrireClient(form.nom, form.adresse, form.nasSimule, form.motDePasse);
+      const client = await inscrireClient(form.nom, form.email, form.nasSimule, form.motDePasse);
       navigate('/kyc-pending', { state: { clientId: client.clientId, nom: client.nom } });
     } catch (err) {
       setErreur(err.message);
@@ -33,7 +33,7 @@ export default function Inscription() {
       <h2>Inscription</h2>
       <form onSubmit={soumettre}>
         <Field label="Nom complet" name="nom" value={form.nom} onChange={change} required />
-        <Field label="Adresse" name="adresse" value={form.adresse} onChange={change} required />
+        <Field label="Email" name="email" value={form.email} onChange={change} required />
         <Field label="NAS (11 chiffres)" name="nasSimule" value={form.nasSimule} onChange={change} required />
         <Field label="Mot de passe" name="motDePasse" type="password" value={form.motDePasse} onChange={change} required />
         {erreur && <p style={styles.erreur}>{erreur}</p>}

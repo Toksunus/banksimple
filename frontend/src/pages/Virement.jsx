@@ -20,14 +20,12 @@ export default function Virement() {
 
   function change(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
-    setResultat(null);
     setErreur(null);
   }
 
   function changeType(t) {
     setType(t);
     setForm(f => ({ ...f, compteDestinataireId: '' }));
-    setResultat(null);
     setErreur(null);
   }
 

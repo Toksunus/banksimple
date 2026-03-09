@@ -128,7 +128,7 @@ export default function Dashboard() {
       {client && (
         <div style={styles.clientCard}>
           <div style={styles.clientNom}>{client.nom}</div>
-          <div style={styles.clientInfo}>Adresse : {client.adresse}</div>
+          <div style={styles.clientInfo}>Email : {client.email}</div>
           <div style={styles.clientInfo}>Statut : {client.statut}</div>
         </div>
       )}
