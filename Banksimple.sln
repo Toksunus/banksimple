@@ -5,13 +5,21 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{B8C495EA-AA14-428C-91D7-CAD5A9BF65C9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankSimple.Domain", "src\BankSimple.Domain\BankSimple.Domain.csproj", "{BF30BB18-EF11-4A8E-B078-FB83B6B4BD07}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankSimple.Domain", "src\monolithe\BankSimple.Domain\BankSimple.Domain.csproj", "{BF30BB18-EF11-4A8E-B078-FB83B6B4BD07}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankSimple.Application", "src\BankSimple.Application\BankSimple.Application.csproj", "{DACECE99-7DCC-4B12-9EA9-84DB3571EBA5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankSimple.Application", "src\monolithe\BankSimple.Application\BankSimple.Application.csproj", "{DACECE99-7DCC-4B12-9EA9-84DB3571EBA5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankSimple.Infrastructure", "src\BankSimple.Infrastructure\BankSimple.Infrastructure.csproj", "{8CCF4571-942D-41C7-8952-FF089E899040}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankSimple.Infrastructure", "src\monolithe\BankSimple.Infrastructure\BankSimple.Infrastructure.csproj", "{8CCF4571-942D-41C7-8952-FF089E899040}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankSimple.Api", "src\BankSimple.Api\BankSimple.Api.csproj", "{F1541A3B-ED27-40BA-B4C0-187FE0FC3E97}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BankSimple.Api", "src\monolithe\BankSimple.Api\BankSimple.Api.csproj", "{F1541A3B-ED27-40BA-B4C0-187FE0FC3E97}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{75C0F775-2353-40BA-A0F6-E0EB7ABE6A68}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientService.Tests", "tests\ClientService.Tests\ClientService.Tests.csproj", "{CD4C6BE9-0264-45BB-9213-AB5CBE466886}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AccountService.Tests", "tests\AccountService.Tests\AccountService.Tests.csproj", "{3FEF3BE7-239B-48D6-A755-AA98AEF18C78}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PaymentService.Tests", "tests\PaymentService.Tests\PaymentService.Tests.csproj", "{288145E1-11F3-4C08-B85D-681E97CD5DF9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -38,11 +46,26 @@ Global
 		{F1541A3B-ED27-40BA-B4C0-187FE0FC3E97}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F1541A3B-ED27-40BA-B4C0-187FE0FC3E97}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F1541A3B-ED27-40BA-B4C0-187FE0FC3E97}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CD4C6BE9-0264-45BB-9213-AB5CBE466886}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CD4C6BE9-0264-45BB-9213-AB5CBE466886}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CD4C6BE9-0264-45BB-9213-AB5CBE466886}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CD4C6BE9-0264-45BB-9213-AB5CBE466886}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3FEF3BE7-239B-48D6-A755-AA98AEF18C78}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3FEF3BE7-239B-48D6-A755-AA98AEF18C78}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3FEF3BE7-239B-48D6-A755-AA98AEF18C78}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3FEF3BE7-239B-48D6-A755-AA98AEF18C78}.Release|Any CPU.Build.0 = Release|Any CPU
+		{288145E1-11F3-4C08-B85D-681E97CD5DF9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{288145E1-11F3-4C08-B85D-681E97CD5DF9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{288145E1-11F3-4C08-B85D-681E97CD5DF9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{288145E1-11F3-4C08-B85D-681E97CD5DF9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{BF30BB18-EF11-4A8E-B078-FB83B6B4BD07} = {B8C495EA-AA14-428C-91D7-CAD5A9BF65C9}
 		{DACECE99-7DCC-4B12-9EA9-84DB3571EBA5} = {B8C495EA-AA14-428C-91D7-CAD5A9BF65C9}
 		{8CCF4571-942D-41C7-8952-FF089E899040} = {B8C495EA-AA14-428C-91D7-CAD5A9BF65C9}
 		{F1541A3B-ED27-40BA-B4C0-187FE0FC3E97} = {B8C495EA-AA14-428C-91D7-CAD5A9BF65C9}
+		{CD4C6BE9-0264-45BB-9213-AB5CBE466886} = {75C0F775-2353-40BA-A0F6-E0EB7ABE6A68}
+		{3FEF3BE7-239B-48D6-A755-AA98AEF18C78} = {75C0F775-2353-40BA-A0F6-E0EB7ABE6A68}
+		{288145E1-11F3-4C08-B85D-681E97CD5DF9} = {75C0F775-2353-40BA-A0F6-E0EB7ABE6A68}
 	EndGlobalSection
 EndGlobal

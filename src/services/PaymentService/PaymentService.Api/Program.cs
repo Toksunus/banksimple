@@ -27,7 +27,8 @@ builder.Host.UseSerilog((context, service, config) =>
 });
 
 builder.Services.AddDbContext<PaymentDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("Default"),
+        b => b.MigrationsAssembly("PaymentService.Infrastructure")));
 
 builder.Services.AddScoped<IVirementRepository, VirementRepository>();
 builder.Services.AddScoped<VirementService>();
@@ -106,7 +107,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<PaymentDbContext>();
-    await db.Database.MigrateAsync();
+    await db.Database.EnsureCreatedAsync();
 }
 
 app.UseSerilogRequestLogging(options =>

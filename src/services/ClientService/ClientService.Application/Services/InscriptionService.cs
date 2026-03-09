@@ -8,7 +8,7 @@ namespace ClientService.Application.Services;
 public class InscriptionRequest
 {
     public string Nom { get; set; } = string.Empty;
-    public string Adresse { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
     public string NasSimule { get; set; } = string.Empty;
     public string MotDePasse { get; set; } = string.Empty;
 }
@@ -31,7 +31,7 @@ public class InscriptionService
         {
             ClientId = Guid.NewGuid(),
             Nom = command.Nom,
-            Adresse = command.Adresse,
+            Email = command.Email,
             NasSimule = command.NasSimule,
             Statut = "Pending",
             Authentification = new Authentification

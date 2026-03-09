@@ -27,7 +27,8 @@ builder.Host.UseSerilog((context, service, config) =>
 });
 
 builder.Services.AddDbContext<ClientDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("Default"),
+        b => b.MigrationsAssembly("ClientService.Infrastructure")));
 
 builder.Services.AddScoped<IClientRepository, ClientRepository>();
 builder.Services.AddScoped<InscriptionService>();
@@ -98,7 +99,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ClientDbContext>();
-    await db.Database.MigrateAsync();
+    await db.Database.EnsureCreatedAsync();
 }
 
 app.UseSerilogRequestLogging(options =>

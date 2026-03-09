@@ -1,4 +1,4 @@
-@startuml mdd
+@startuml class
 title BankSimple - Modèle de Domaine (MDD)
 
 class Client {

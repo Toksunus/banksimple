@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master, upgrade-to-NET8 ]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: self-hosted
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ${{ secrets.DB_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          POSTGRES_DB: banksimple
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U ${{ secrets.DB_USER }}"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: |
+          dotnet restore src/services/ClientService/ClientService.Api/ClientService.Api.csproj
+          dotnet restore src/services/AccountService/AccountService.Api/AccountService.Api.csproj
+          dotnet restore src/services/PaymentService/PaymentService.Api/PaymentService.Api.csproj
+
+      - name: Build ClientService
+        run: dotnet build src/services/ClientService/ClientService.Api/ClientService.Api.csproj -c Release --no-restore
+
+      - name: Build AccountService
+        run: dotnet build src/services/AccountService/AccountService.Api/AccountService.Api.csproj -c Release --no-restore
+
+      - name: Build PaymentService
+        run: dotnet build src/services/PaymentService/PaymentService.Api/PaymentService.Api.csproj -c Release --no-restore
+
+      - name: Run tests
+        env:
+          ConnectionStrings__Default: "Host=127.0.0.1;Port=5432;Database=banksimple;Username=${{ secrets.DB_USER }};Password=${{ secrets.DB_PASSWORD }}"
+          Jwt__Secret: ${{ secrets.JWT_SECRET }}
+          Jwt__Issuer: "BankSimple"
+          Jwt__Audience: "BankSimpleClients"
+          Redis__ConnectionString: "127.0.0.1:6379"
+        run: dotnet test Banksimple.sln --no-build -c Release --verbosity normal
