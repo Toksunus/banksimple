@@ -1,0 +1,316 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+		"name": "BankSimple",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "/auth/login",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"login\": \"12345678901\",\n  \"motDePasse\": \"Test1234x\"\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/v1/auth/login",
+							"host": ["{{baseURL}}"],
+							"path": ["api", "v1", "auth", "login"]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"  const json = pm.response.json();",
+									"  pm.collectionVariables.set('clientId', json.clientId);",
+									"  pm.collectionVariables.set('otpCode', json.otpCode);",
+									"}"
+								]
+							}
+						}
+					],
+					"response": []
+				},
+				{
+					"name": "/auth/verify-otp",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"clientId\": \"{{clientId}}\",\n  \"otpCode\": \"{{otpCode}}\"\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/v1/auth/verify-otp",
+							"host": ["{{baseURL}}"],
+							"path": ["api", "v1", "auth", "verify-otp"]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"  const json = pm.response.json();",
+									"  pm.collectionVariables.set('token', json.token);",
+									"}"
+								]
+							}
+						}
+					],
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Clients",
+			"item": [
+				{
+					"name": "/clients/inscription",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Content-Type", "value": "application/json" }],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"nom\": \"Alice Tremblay\",\n  \"adresse\": \"100 rue Maple, Montréal\",\n  \"nasSimule\": \"12345678901\",\n  \"motDePasse\": \"Test1234x\"\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/v1/clients/inscription",
+							"host": ["{{baseURL}}"],
+							"path": ["api", "v1", "clients", "inscription"]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"  const json = pm.response.json();",
+									"  pm.collectionVariables.set('clientId', json.clientId);",
+									"}"
+								]
+							}
+						}
+					],
+					"response": []
+				},
+				{
+					"name": "/clients/:id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/api/v1/clients/{{clientId}}",
+							"host": ["{{baseURL}}"],
+							"path": ["api", "v1", "clients", "{{clientId}}"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/clients/:id/valider-kyc",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/api/v1/clients/{{clientId}}/valider-kyc",
+							"host": ["{{baseURL}}"],
+							"path": ["api", "v1", "clients", "{{clientId}}", "valider-kyc"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/clients/:id",
+					"request": {
+						"method": "DELETE",
+						"header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+						"url": {
+							"raw": "{{baseURL}}/api/v1/clients/{{clientId}}",
+							"host": ["{{baseURL}}"],
+							"path": ["api", "v1", "clients", "{{clientId}}"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Comptes",
+			"item": [
+				{
+					"name": "/clients/:id/comptes",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{token}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"type\": \"Cheque\"\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/v1/clients/{{clientId}}/comptes",
+							"host": ["{{baseURL}}"],
+							"path": ["api", "v1", "clients", "{{clientId}}", "comptes"]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"  const json = pm.response.json();",
+									"  pm.collectionVariables.set('compteId', json.compteId);",
+									"}"
+								]
+							}
+						}
+					],
+					"response": []
+				},
+				{
+					"name": "/clients/:id/comptes",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+						"url": {
+							"raw": "{{baseURL}}/api/v1/clients/{{clientId}}/comptes",
+							"host": ["{{baseURL}}"],
+							"path": ["api", "v1", "clients", "{{clientId}}", "comptes"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/clients/:id/comptes/:compteId/depot",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{token}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "1000",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/v1/clients/{{clientId}}/comptes/{{compteId}}/depot",
+							"host": ["{{baseURL}}"],
+							"path": ["api", "v1", "clients", "{{clientId}}", "comptes", "{{compteId}}", "depot"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/clients/:id/comptes/:compteId",
+					"request": {
+						"method": "DELETE",
+						"header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+						"url": {
+							"raw": "{{baseURL}}/api/v1/clients/{{clientId}}/comptes/{{compteId}}",
+							"host": ["{{baseURL}}"],
+							"path": ["api", "v1", "clients", "{{clientId}}", "comptes", "{{compteId}}"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Virements",
+			"item": [
+				{
+					"name": "/virements",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{token}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"compteSourceId\": \"{{compteId}}\",\n  \"compteDestinataireId\": \"REMPLACER_PAR_COMPTE_DEST\",\n  \"montant\": 100\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/v1/virements",
+							"host": ["{{baseURL}}"],
+							"path": ["api", "v1", "virements"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/virements/compte/:compteId",
+					"request": {
+						"method": "GET",
+						"header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+						"url": {
+							"raw": "{{baseURL}}/api/v1/virements/compte/{{compteId}}",
+							"host": ["{{baseURL}}"],
+							"path": ["api", "v1", "virements", "compte", "{{compteId}}"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Observabilité",
+			"item": [
+				{
+					"name": "/health (client-service)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseURL}}/api/v1/health",
+							"host": ["{{baseURL}}"],
+							"path": ["api", "v1", "health"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "/metrics (client-service)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:5001/metrics",
+							"raw": "http://localhost:5001/metrics",
+							"host": ["localhost:5001"],
+							"path": ["metrics"]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{ "key": "baseURL", "value": "http://localhost:8090", "type": "default" },
+		{ "key": "token",    "value": "", "type": "default" },
+		{ "key": "clientId", "value": "", "type": "default" },
+		{ "key": "compteId", "value": "", "type": "default" },
+		{ "key": "otpCode",  "value": "", "type": "default" }
+	]
+}
