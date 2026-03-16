@@ -1,0 +1,26 @@
+@startuml sequence_UC-01_kyc
+title UC-01 : Vérification d'identité (KYC)
+
+hide footbox
+
+actor Client
+participant "Kong" as Kong
+participant "nginx" as LB
+participant "ClientService" as CS
+database "postgres-client" as DB
+
+Client -> Kong : POST /api/v1/clients/{id}/valider-kyc
+Kong -> LB : HTTP
+LB -> CS : POST /api/v1/clients/{id}/valider-kyc
+
+CS -> DB : GetByIdAsync(clientId)
+
+alt Client introuvable
+  CS --> Client : 404 Not Found\n{ error: "Client n'existe pas." }
+else Client trouvé
+  CS -> DB : UpdateAsync(client)\n(VerificationKYC.Resultat = true, Statut = Active)
+  CS -> DB : AuditLogs.AddAsync(KYC_VALIDE)
+  CS --> Client : 200 OK\n{ ClientId, Nom, Statut: Active }
+end
+
+@enduml

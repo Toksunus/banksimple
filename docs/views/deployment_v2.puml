@@ -1,0 +1,75 @@
+@startuml deployment_v2
+title BankSimple - Diagramme de Déploiement v2 (DBs séparées des APIs)
+
+node "Conteneur API Gateway" {
+  component "Kong" <<API Gateway>> as Gateway
+}
+
+node "Conteneur Load Balancer" {
+  component "NGINX" <<Load Balancer>> as LB
+}
+
+node "Conteneur Observabilité" {
+  component "Grafana" <<Monitoring>> as Grafana
+  component "Prometheus" <<Metrics>> as Prometheus
+  Grafana ..> Prometheus : <<scrape>>
+}
+
+node "Conteneur ClientService (×N)" {
+  component "ClientService.Api" <<component>> as Client_API
+}
+
+node "Conteneur AccountService (×N)" {
+  component "AccountService.Api" <<component>> as Account_API
+}
+
+node "Conteneur PaymentService (×N)" {
+  component "PaymentService.Api" <<component>> as Payment_API
+}
+
+node "Conteneur ComplianceService (×N)" {
+  component "ComplianceService.Api" <<component>> as Compliance_API
+}
+
+node "Conteneur postgres-client" {
+  database "ClientsDB" <<database>> as Client_DB
+}
+
+node "Conteneur postgres-account" {
+  database "AccountsDB" <<database>> as Account_DB
+}
+
+node "Conteneur postgres-payment" {
+  database "PaymentsDB" <<database>> as Payment_DB
+}
+
+node "Conteneur postgres-compliance" {
+  database "ComplianceDB" <<database>> as Compliance_DB
+}
+
+node "Conteneur Cache" {
+  database "Redis" <<Cache>> as Cache
+}
+
+Gateway --> LB : HTTP
+LB --> Client_API : HTTP
+LB --> Account_API : HTTP
+LB --> Payment_API : HTTP
+LB --> Compliance_API : HTTP
+
+Client_API ..> Client_DB : <<interface>>
+Account_API ..> Account_DB : <<interface>>
+Payment_API ..> Payment_DB : <<interface>>
+Compliance_API ..> Compliance_DB : <<interface>>
+
+Prometheus ..> Client_API : <<scrape>>
+Prometheus ..> Account_API : <<scrape>>
+Prometheus ..> Payment_API : <<scrape>>
+Prometheus ..> Compliance_API : <<scrape>>
+
+Client_API --> Cache
+Account_API --> Cache
+Payment_API --> Cache
+Compliance_API --> Cache
+
+@enduml

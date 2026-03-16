@@ -1,0 +1,26 @@
+@startuml sequence_UC-01_insc
+title UC-01 : Inscription
+
+hide footbox
+
+actor Client
+participant "Kong" as Kong
+participant "nginx" as LB
+participant "ClientService" as CS
+database "postgres-client" as DB
+
+Client -> Kong : POST /api/v1/clients/inscription\n{ Nom, Email, NasSimule, MotDePasse }
+Kong -> LB : HTTP
+LB -> CS : POST /api/v1/clients/inscription
+
+CS -> DB : ExistsByNasAsync(NasSimule)
+
+alt NAS déjà existant
+  CS --> Client : 400 Bad Request\n{ error: "Un client avec ce NAS existe déjà." }
+else NAS disponible
+  CS -> DB : CreateAsync(client)
+CS -> DB : AuditLogs.AddAsync(INSCRIPTION)
+  CS --> Client : 201 Created\n{ ClientId, Nom, Statut: Pending }
+end
+
+@enduml

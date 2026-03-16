@@ -1,0 +1,21 @@
+@startuml sequence_UC-05_idempotence
+title UC-05 : Virement bancaire (requête dupliquée)
+
+hide footbox
+
+actor Client
+participant "Kong" as Kong
+participant "nginx" as LB
+participant "PaymentService" as PS
+database "Redis" as Redis
+
+Client -> Kong : POST /api/v1/virements\n{ CompteSourceId, CompteDestinataireId, Montant }\nIdempotency-Key: {key}
+Kong -> LB : HTTP
+LB -> PS : POST /api/v1/virements
+
+PS -> Redis : StringGetAsync(idempotency:{key})
+Redis --> PS : résultat déjà traité
+
+PS --> Client : 200 OK (résultat existant)\n{ VirementId, Montant, Statut }
+
+@enduml

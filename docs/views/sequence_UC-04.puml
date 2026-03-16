@@ -1,0 +1,30 @@
+@startuml sequence_UC-04
+title UC-04 : Consultation des soldes et historiques
+
+hide footbox
+
+actor Client
+participant "Kong" as Kong
+participant "nginx" as LB
+participant "AccountService" as AS
+database "postgres-account" as DB
+database "Redis" as Redis
+
+Client -> Kong : GET /api/v1/clients/{clientId}/comptes\nAuthorization: Bearer JWT
+Kong -> LB : HTTP
+LB -> AS : GET /api/v1/clients/{clientId}/comptes
+
+AS -> AS : Valider JWT
+AS -> Redis : StringGetAsync(comptes:{clientId})
+
+alt Cache hit (TTL 60s)
+  Redis --> AS : comptes[]
+  AS --> Client : 200 OK\n{ comptes[] } (depuis cache)
+else Cache miss
+  AS -> DB : GetByClientIdAsync(clientId)
+  DB --> AS : comptes[]
+  AS -> Redis : StringSetAsync(comptes:{clientId}, TTL 60s)
+  AS --> Client : 200 OK\n{ comptes[] } (depuis DB)
+end
+
+@enduml

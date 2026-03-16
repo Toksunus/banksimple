@@ -1,0 +1,31 @@
+@startuml sequence_UC-03
+title UC-03 : Ouverture de compte bancaire
+
+hide footbox
+
+actor Client
+participant "Kong" as Kong
+participant "nginx" as LB
+participant "AccountService" as AS
+database "postgres-account" as DB
+database "Redis" as Redis
+
+Client -> Kong : POST /api/v1/clients/{clientId}/comptes\n{ Type: Chèque|Épargne }\nAuthorization: Bearer JWT
+Kong -> LB : HTTP
+LB -> AS : POST /api/v1/clients/{clientId}/comptes
+
+AS -> AS : Valider JWT
+
+alt JWT invalide
+  AS --> Client : 401 Unauthorized
+else Compte du même type déjà existant
+  AS -> DB : GetByClientIdAsync(clientId)
+  AS --> Client : 400 Bad Request\n{ error: "Vous avez déjà un compte {type}." }
+else JWT valide
+  AS -> DB : GetByClientIdAsync(clientId)
+  AS -> DB : CreateAsync(compte)
+  AS -> Redis : KeyDeleteAsync(comptes:{clientId})
+  AS --> Client : 201 Created\n{ CompteId, Type, Solde, DateOuverture, Statut }
+end
+
+@enduml

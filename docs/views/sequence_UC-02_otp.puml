@@ -1,0 +1,30 @@
+@startuml sequence_UC-02_otp
+title UC-02 : Authentification (Vérification OTP)
+
+hide footbox
+
+actor Client
+participant "Kong" as Kong
+participant "nginx" as LB
+participant "ClientService" as CS
+database "postgres-client" as DB
+database "Redis" as Redis
+
+Client -> Kong : POST /api/v1/auth/verify-otp\n{ ClientId, OtpCode }
+Kong -> LB : HTTP
+LB -> CS : POST /api/v1/auth/verify-otp
+
+CS -> Redis : StringGetAsync(otp:{clientId})
+
+alt OTP invalide ou expiré
+  CS -> DB : AuditLogs.AddAsync(MFA_FAILED)
+  CS --> Client : 401 Unauthorized\n{ error: "Code MFA invalide ou expiré." }
+else OTP valide
+  CS -> Redis : KeyDeleteAsync(otp:{clientId})
+  CS -> DB : CreateSessionAsync(session)
+  CS -> CS : GenererToken(client, session)
+  CS -> DB : AuditLogs.AddAsync(MFA_SUCCESS)
+  CS --> Client : 200 OK\n{ token, sessionId, dateExpiration }
+end
+
+@enduml

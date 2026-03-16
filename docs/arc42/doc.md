@@ -9,6 +9,7 @@
 | **Cours** | GTI611 — Architecture logicielle |
 | **Projet** | Phase 1 — Plateforme bancaire BankSimple |
 | **Date** | Mars 2026 |
+| **GitHub** | [https://github.com/Toksunus/banksimple](https://github.com/Toksunus/banksimple) |
 
 ---
 
@@ -163,7 +164,12 @@ Le système permet aux clients bancaires de :
 <div style="page-break-before: always;"></div>
 
 ## 7. Vue de déploiement
-![Déploiement](deployment.png)
+
+### Version 1 — PostgreSQL partagé (architecture initiale)
+![Déploiement v1](deployment.png)
+
+### Version 2 — PostgreSQL dédié par service (architecture corrigée)
+![Déploiement v2](deployment_v2.png)
 
 ### Architecture conteneurs
 - **banksimple-kong** : API Gateway Kong 3.6, port 8090, config déclarative `kong.yml`
@@ -211,13 +217,14 @@ Voir `/docs/adr/` :
 
 Distribution des requêtes : 60 % lectures comptes, 20 % dépôts, 20 % virements.
 
+##### Version 1 — PostgreSQL partagé (architecture initiale)
+
 | N instances | P95 latence | P99 latence | Taux d'erreurs | Pic RPS |
 |:-----------:|:-----------:|:-----------:|:--------------:|:-------:|
 | 1 | ~25 ms | ~50 ms | 0 % | ~50 req/s |
 | 2 | ~25 ms | ~45 ms | 0 % | ~50 req/s |
 | 3 | ~25 ms | ~50 ms | 0 % | ~13 req/s |
 | 4 | ~60 ms | ~115 ms | 0 % | ~9 req/s |
-
 
 **Captures Grafana :**
 
@@ -236,6 +243,17 @@ N=3 — 3 replicas par service :
 
 N=4 — 4 replicas par service :
 ![Load test N=4](../images/load-test-n4.png)
+
+##### Version 2 — PostgreSQL dédié par service (architecture corrigée)
+
+| N instances | P95 latence | P99 latence | Taux d'erreurs | Pic RPS |
+|:-----------:|:-----------:|:-----------:|:--------------:|:-------:|
+| 1 | — | — | — | — |
+| 2 | — | — | — | — |
+| 3 | — | — | — | — |
+| 4 | — | — | — | — |
+
+> **À compléter** : relancer `k6 run -e BASE_URL=http://localhost:8090 k6/load-test.js` pour N=1, 2, 3, 4 et reporter les résultats Grafana.
 
 <div style="page-break-before: always;"></div>
 
@@ -281,6 +299,42 @@ Seules les 3 requêtes en cours d'exécution au moment du docker stop ont échou
 
 ### Scalabilité
 - Chaque microservice est répliqué indépendamment : `docker compose up --scale account-service=4`
+
+## Analyse critique de l'architecture
+
+### Problème identifié : goulot d'étranglement sur la base de données partagée
+
+L'architecture initiale utilisait un **seul conteneur PostgreSQL** hébergeant les trois bases de données (`banksimple_clients`, `banksimple_accounts`, `banksimple_payments`) sur le même processus. Cette décision, acceptable pour N=1 ou N=2 replicas, révèle une limite structurelle à partir de N=3.
+
+**Ce qui se passe à N=3 et N=4** :
+
+- N=3 → 9 instances de services (3×3) + nginx + Kong + Redis + Prometheus + Grafana + pgAdmin = **~15 conteneurs** se disputent les ressources de la même machine hôte
+- N=4 → 12 instances de services = **~18 conteneurs**
+- Surtout : les 9–12 instances de services établissent toutes leurs connexions vers **le même processus PostgreSQL**, qui devient le point de contention central
+
+Le résultat visible dans les tests : le RPS s'effondre de ~50 req/s (N=1,2) à ~13 req/s (N=3) puis ~9 req/s (N=4), malgré une latence et un taux d'erreurs encore dans les seuils. Ce n'est pas la scalabilité des services qui est en cause — c'est la **ressource partagée en bas de pile** qui sature en premier.
+
+### Faille architecturale
+
+L'isolation entre microservices était logique (3 bases de données distinctes) mais pas physique : les 3 bases vivaient sur le même moteur PostgreSQL. Cela contredit le principe fondamental des microservices selon lequel chaque service doit posséder sa propre ressource de persistance de façon autonome et indépendante.
+
+```
+Avant (fautif) :           Après (corrigé) :
+
+client-service ──┐         client-service  ── postgres-client
+account-service ─┼──► postgres   account-service ── postgres-account
+payment-service ─┘         payment-service ── postgres-payment
+```
+
+Avec l'architecture initiale, scaler les services sans scaler la DB ne produit aucun gain — pire, cela augmente la contention sur une ressource fixe.
+
+### Correctif appliqué
+
+Chaque microservice dispose maintenant de son **propre conteneur PostgreSQL dédié** (`postgres-client`, `postgres-account`, `postgres-payment`). Chaque conteneur est isolé, a son propre volume de données, et son propre healthcheck. Les connexions des replicas sont distribuées sur 3 processus postgres indépendants au lieu d'un seul.
+
+Ce changement permet à chaque service de scaler horizontalement sans créer de pression sur les services voisins.
+
+<div style="page-break-before: always;"></div>
 
 ## 11. Risques
 

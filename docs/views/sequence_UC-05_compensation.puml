@@ -1,0 +1,27 @@
+@startuml sequence_UC-05_compensation
+title UC-05 : Virement bancaire
+
+hide footbox
+
+actor Client
+participant "PaymentService" as PS
+participant "AccountService" as AS
+database "postgres-payment" as PayDB
+database "postgres-account" as AccDB
+
+PS -> AS : DebitAsync(CompteSourceId, montant)
+AS -> AccDB : UpdateAsync(compte)
+AS --> PS : 200 OK
+
+PS -> AS : CreditAsync(CompteDestinataireId, montant)
+AS --> PS : 400 Bad Request (échec)
+
+note over PS : Rollback — rembourser le compte source
+PS -> AS : CreditAsync(CompteSourceId, montant)
+AS -> AccDB : UpdateAsync(compte)
+AS --> PS : 200 OK
+
+PS -> PayDB : CreateAsync(virement)\n(Statut = Echoué)
+PS --> Client : 400 Bad Request\n{ error }
+
+@enduml

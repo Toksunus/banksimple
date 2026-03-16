@@ -13,21 +13,58 @@ services:
       retries: 5
       start_period: 10s
 
-  postgres:
+  postgres-client:
     image: postgres:16
     restart: unless-stopped
-    container_name: banksimple-postgres
+    container_name: banksimple-postgres-client
     environment:
       POSTGRES_USER: banksimple
       POSTGRES_PASSWORD: banksimple
-      POSTGRES_DB: banksimple
+      POSTGRES_DB: banksimple_clients
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
-      - ./postgres-init:/docker-entrypoint-initdb.d:ro
+      - pgdata-client:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U banksimple -d banksimple"]
+      test: ["CMD-SHELL", "pg_isready -U banksimple -d banksimple_clients"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+  postgres-account:
+    image: postgres:16
+    restart: unless-stopped
+    container_name: banksimple-postgres-account
+    environment:
+      POSTGRES_USER: banksimple
+      POSTGRES_PASSWORD: banksimple
+      POSTGRES_DB: banksimple_accounts
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata-account:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U banksimple -d banksimple_accounts"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+
+  postgres-payment:
+    image: postgres:16
+    restart: unless-stopped
+    container_name: banksimple-postgres-payment
+    environment:
+      POSTGRES_USER: banksimple
+      POSTGRES_PASSWORD: banksimple
+      POSTGRES_DB: banksimple_payments
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata-payment:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U banksimple -d banksimple_payments"]
       interval: 10s
       timeout: 10s
       retries: 5
@@ -42,25 +79,27 @@ services:
     ports:
       - "5050:80"
     depends_on:
-      - postgres
+      - postgres-client
+      - postgres-account
+      - postgres-payment
 
   client-service:
     build:
       context: .
       dockerfile: src/services/ClientService/Dockerfile
     deploy:
-      replicas: 1   # changer ici pour scaler : 1, 2, 3, 4
+      replicas: 3
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__Default: "Host=postgres;Port=5432;Database=banksimple_clients;Username=banksimple;Password=banksimple"
+      ConnectionStrings__Default: "Host=postgres-client;Port=5432;Database=banksimple_clients;Username=banksimple;Password=banksimple"
       Jwt__Secret: "BankSimple2026SuperSecretJwtKey!!"
       Jwt__Issuer: "BankSimple"
       Jwt__Audience: "BankSimpleClients"
       Jwt__ExpirationHours: "4"
       Redis__ConnectionString: "redis:6379"
     depends_on:
-      postgres:
+      postgres-client:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -76,18 +115,18 @@ services:
       context: .
       dockerfile: src/services/AccountService/Dockerfile
     deploy:
-      replicas: 1   # changer ici pour scaler : 1, 2, 3, 4
+      replicas: 3
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__Default: "Host=postgres;Port=5432;Database=banksimple_accounts;Username=banksimple;Password=banksimple"
+      ConnectionStrings__Default: "Host=postgres-account;Port=5432;Database=banksimple_accounts;Username=banksimple;Password=banksimple"
       Jwt__Secret: "BankSimple2026SuperSecretJwtKey!!"
       Jwt__Issuer: "BankSimple"
       Jwt__Audience: "BankSimpleClients"
       Jwt__ExpirationHours: "4"
       Redis__ConnectionString: "redis:6379"
     depends_on:
-      postgres:
+      postgres-account:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -103,11 +142,11 @@ services:
       context: .
       dockerfile: src/services/PaymentService/Dockerfile
     deploy:
-      replicas: 1   # changer ici pour scaler : 1, 2, 3, 4
+      replicas: 3
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__Default: "Host=postgres;Port=5432;Database=banksimple_payments;Username=banksimple;Password=banksimple"
+      ConnectionStrings__Default: "Host=postgres-payment;Port=5432;Database=banksimple_payments;Username=banksimple;Password=banksimple"
       Jwt__Secret: "BankSimple2026SuperSecretJwtKey!!"
       Jwt__Issuer: "BankSimple"
       Jwt__Audience: "BankSimpleClients"
@@ -115,6 +154,8 @@ services:
       Redis__ConnectionString: "redis:6379"
       AccountService__BaseUrl: "http://account-service:8080"
     depends_on:
+      postgres-payment:
+        condition: service_healthy
       account-service:
         condition: service_healthy
       redis:
@@ -194,5 +235,7 @@ services:
       - prometheus
 
 volumes:
-  pgdata:
+  pgdata-client:
+  pgdata-account:
+  pgdata-payment:
   grafana_data:

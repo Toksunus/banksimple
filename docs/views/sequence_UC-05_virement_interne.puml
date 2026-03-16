@@ -1,0 +1,50 @@
+@startuml sequence_UC-05_virement_interne
+title UC-05 : Virement interne (même client, comptes différents)
+
+hide footbox
+
+actor Client
+participant "Kong" as Kong
+participant "nginx" as LB
+participant "PaymentService" as PS
+participant "AccountService" as AS
+database "postgres-payment" as PayDB
+database "postgres-account" as AccDB
+database "Redis" as Redis
+
+Client -> Kong : POST /api/v1/virements\n{ CompteSourceId, CompteDestinataireId, Montant }\nAuthorization: Bearer JWT
+Kong -> LB : HTTP
+LB -> PS : POST /api/v1/virements
+
+PS -> Redis : StringGetAsync(idempotency:{key})
+
+PS -> AS : GET /internal/comptes/{CompteSourceId}
+AS -> AccDB : GetByIdAsync(CompteSourceId)
+AS --> PS : { Solde, ClientId }
+
+PS -> AS : GET /internal/comptes/{CompteDestinataireId}
+AS -> AccDB : GetByIdAsync(CompteDestinataireId)
+AS --> PS : { Solde, ClientId }
+
+note over PS : ClientId source == ClientId dest\n→ virement interne, pas de vérification AML
+
+alt Solde insuffisant
+  PS --> Client : 400 Bad Request\n{ error: "Fonds insuffisants sur le compte source." }
+else Solde suffisant
+  PS -> AS : DebitAsync(CompteSourceId, montant)
+  AS -> AccDB : UpdateAsync(compte)
+  AS -> Redis : KeyDeleteAsync(comptes:{clientId})
+  AS --> PS : 200 OK { Solde }
+
+  PS -> AS : CreditAsync(CompteDestinataireId, montant)
+  AS -> AccDB : UpdateAsync(compte)
+  AS -> Redis : KeyDeleteAsync(comptes:{clientId})
+  AS --> PS : 200 OK { Solde }
+
+  PS -> PayDB : CreateAsync(virement)\n(Statut = Effectué)
+  PS -> Redis : StringSetAsync(idempotency:{key}, TTL 24h)
+  PS -> PayDB : AuditLogs.AddAsync(VIREMENT_EFFECTUÉ)
+  PS --> Client : 200 OK\n{ VirementId, Montant, Statut: Effectué }
+end
+
+@enduml

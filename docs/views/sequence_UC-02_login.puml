@@ -1,0 +1,29 @@
+@startuml sequence_UC-02_login
+title UC-02 : Authentification (Login)
+
+hide footbox
+
+actor Client
+participant "Kong" as Kong
+participant "nginx" as LB
+participant "ClientService" as CS
+database "postgres-client" as DB
+database "Redis" as Redis
+
+Client -> Kong : POST /api/v1/auth/login\n{ Login, MotDePasse }
+Kong -> LB : HTTP
+LB -> CS : POST /api/v1/auth/login
+
+CS -> DB : GetByLoginAsync(Login)
+
+alt Identifiants invalides ou Statut != Active
+  CS -> DB : AuditLogs.AddAsync(LOGIN_FAILED)
+  CS --> Client : 401 Unauthorized\n{ error: "Identifiants invalides." }
+else Identifiants valides
+  CS -> CS : otpCode = Random.Shared.Next(100000, 999999).ToString()
+  CS -> Redis : StringSetAsync(otp:{clientId}, otpCode, TTL 5min)
+  CS -> DB : AuditLogs.AddAsync(LOGIN_SUCCESS)
+  CS --> Client : 200 OK\n{ clientId, otpCode }
+end
+
+@enduml
