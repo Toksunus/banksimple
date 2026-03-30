@@ -9,4 +9,5 @@ public interface ICompteRepository
     Task UpdateAsync(Compte compte);
     Task DeleteAsync(Guid compteId);
     Task<List<Compte>> GetByClientIdAsync(Guid clientId);
+    Task<Compte?> GetByKeyAsync(string key);
 }

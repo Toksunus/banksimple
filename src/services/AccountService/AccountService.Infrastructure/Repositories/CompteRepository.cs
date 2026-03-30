@@ -49,4 +49,10 @@ public class CompteRepository : ICompteRepository
             .Where(c => c.ClientId == clientId)
             .ToListAsync();
     }
+
+    public async Task<Compte?> GetByKeyAsync(string key)
+    {
+        return await _context.Comptes
+            .FirstOrDefaultAsync(c => c.Key == key);
+    }
 }

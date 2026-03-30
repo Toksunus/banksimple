@@ -9,6 +9,7 @@ public class CompteRequest
 {
     public Guid ClientId { get; set; }
     public TypeCompte Type { get; set; }
+    public string? Key { get; set; }
 }
 
 public class CompteService
@@ -33,7 +34,8 @@ public class CompteService
             Type = command.Type.ToString(),
             Solde = 0,
             DateOuverture = DateTime.UtcNow,
-            Statut = "Actif"
+            Statut = "Actif",
+            Key = command.Key ?? string.Empty
         };
 
         return await _compteRepository.CreateAsync(compte);
@@ -42,6 +44,11 @@ public class CompteService
     public async Task<Compte?> GetCompteByIdAsync(Guid compteId)
     {
         return await _compteRepository.GetByIdAsync(compteId);
+    }
+
+    public async Task<Compte?> GetCompteByKeyAsync(string key)
+    {
+        return await _compteRepository.GetByKeyAsync(key);
     }
 
     public async Task<List<Compte>> GetComptesByClientIdAsync(Guid clientId)

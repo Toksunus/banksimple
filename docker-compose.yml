@@ -1,10 +1,35 @@
 services:
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: banksimple-kafka
+    ports:
+      - "9093:9092"
+    environment:
+      CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qg=="
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:29093"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_LISTENERS: "PLAINTEXT://kafka:29092,PLAINTEXT_HOST://0.0.0.0:9092,CONTROLLER://kafka:29093"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9093"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    healthcheck:
+      test: kafka-broker-api-versions --bootstrap-server kafka:9092 || exit 1
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
   redis:
     image: redis:7-alpine
     container_name: banksimple-redis
     ports:
-      - "6379:6379"
-    # Désactiver la persistance pour les tests, container redemarre cache vide
+      - "6380:6379"
     command: redis-server --save "" --appendonly no
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -88,7 +113,7 @@ services:
       context: .
       dockerfile: src/services/ClientService/Dockerfile
     deploy:
-      replicas: 3
+      replicas: 4
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
@@ -115,7 +140,7 @@ services:
       context: .
       dockerfile: src/services/AccountService/Dockerfile
     deploy:
-      replicas: 3
+      replicas: 4
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
@@ -142,7 +167,7 @@ services:
       context: .
       dockerfile: src/services/PaymentService/Dockerfile
     deploy:
-      replicas: 3
+      replicas: 4
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
@@ -153,12 +178,17 @@ services:
       Jwt__ExpirationHours: "4"
       Redis__ConnectionString: "redis:6379"
       AccountService__BaseUrl: "http://account-service:8080"
+      Kafka__BrokerUrl: "kafka:29092"
+      Kafka__GroupId: "banksimple-payment"
+      Bbc__BaseUrl: "http://host.docker.internal:8080"
     depends_on:
       postgres-payment:
         condition: service_healthy
       account-service:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "bash -c '</dev/tcp/localhost/8080' && echo ok || exit 1"]

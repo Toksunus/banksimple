@@ -8,4 +8,5 @@ public class Compte
     public decimal Solde { get; set; } = 0;
     public DateTime DateOuverture { get; set; }
     public string Statut { get; set; } = "Actif";
+    public string Key { get; set; } = string.Empty;
 }

@@ -49,6 +49,22 @@ public class DebitCreditController : ControllerBase
         }
     }
 
+    [HttpGet("key/{key}")]
+    public async Task<IActionResult> GetCompteByKey(string key)
+    {
+        var compte = await _compteService.GetCompteByKeyAsync(key);
+        if (compte == null) return NotFound(new { error = "Compte introuvable." });
+
+        return Ok(new
+        {
+            compte.CompteId,
+            compte.ClientId,
+            compte.Solde,
+            compte.Statut,
+            compte.Type
+        });
+    }
+
     [HttpGet("{compteId:guid}")]
     public async Task<IActionResult> GetCompte(Guid compteId)
     {
