@@ -1,4 +1,6 @@
 using System.Net.Http.Json;
+using PaymentService.Domain.Entities;
+using PaymentService.Domain.Interfaces;
 
 namespace PaymentService.Application.Services;
 
@@ -20,6 +22,17 @@ public class AccountServiceHttpClient : IAccountServiceClient
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<CompteDto>();
     }
+
+    public async Task<CompteDto?> GetCompteByKeyAsync(string accountKey)
+    {
+        var response = await _httpClient.GetAsync($"/internal/comptes/key/{accountKey}");
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            return null;
+
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<CompteDto>();
+    }
+
 
     public async Task<CompteDto> DebitAsync(Guid compteId, decimal montant)
     {

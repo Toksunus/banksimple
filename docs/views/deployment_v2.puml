@@ -1,5 +1,5 @@
 @startuml deployment_v2
-title BankSimple - Diagramme de Déploiement v2 (DBs séparées des APIs)
+title BankSimple - Diagramme de Déploiement v2
 
 node "Conteneur API Gateway" {
   component "Kong" <<API Gateway>> as Gateway
@@ -15,19 +15,19 @@ node "Conteneur Observabilité" {
   Grafana ..> Prometheus : <<scrape>>
 }
 
-node "Conteneur ClientService (×N)" {
+node "Conteneur ClientService" {
   component "ClientService.Api" <<component>> as Client_API
 }
 
-node "Conteneur AccountService (×N)" {
+node "Conteneur AccountService" {
   component "AccountService.Api" <<component>> as Account_API
 }
 
-node "Conteneur PaymentService (×N)" {
+node "Conteneur PaymentService" {
   component "PaymentService.Api" <<component>> as Payment_API
 }
 
-node "Conteneur ComplianceService (×N)" {
+node "Conteneur ComplianceService" {
   component "ComplianceService.Api" <<component>> as Compliance_API
 }
 

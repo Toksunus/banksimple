@@ -23,7 +23,7 @@
 | **4. Observabilité & Charge** | 20 % | 4 Golden Signals Grafana, k6 load-test (N=1–4) + stress test + kill instance |
 | **5. LB & Caching** | 10 % | nginx least_conn, cache Redis OTP (5 min), gains mesurés |
 | **6. Microservices & Gateway** | 15 % | 3 microservices, Kong (routage, CORS, rate limiting, Prometheus)|
-| **7. Doc & Décisions** | 10 % | Arc42 (§§ 1–12), 4+1 (5 vues PlantUML), 5 ADRs, README |
+| **7. Doc & Décisions** | 10 % | Arc42 (1–12), 4+1 (19 vues PlantUML : use case, classe, composant, 2 déploiements, 5 activités, 10 séquences), 5 ADRs, README |
 
 <div style="page-break-before: always;"></div>
 
@@ -139,27 +139,67 @@ Le système permet aux clients bancaires de :
 ## 6. Vue d'exécution
 
 ### UC-01 — Inscription & KYC
-![Activité UC-01](activity_UC-01.png)
+![Activité UC-01](activity/activity_UC-01.png)
+
+#### Diagramme de séquence — Inscription
+![Séquence UC-01 Inscription](sequence/sequence_UC-01_insc.png)
+
+<div style="page-break-before: always;"></div>
+
+#### Diagramme de séquence — Validation KYC
+![Séquence UC-01 KYC](sequence/sequence_UC-01_kyc.png)
 
 <div style="page-break-before: always;"></div>
 
 ### UC-02 — Authentification & MFA
-![Activité UC-02](activity_UC-02.png)
+![Activité UC-02](activity/activity_UC-02.png)
+
+#### Diagramme de séquence — Login
+![Séquence UC-02 Login](sequence/sequence_UC-02_login.png)
+
+<div style="page-break-before: always;"></div>
+
+#### Diagramme de séquence — Vérification OTP
+![Séquence UC-02 OTP](sequence/sequence_UC-02_otp.png)
 
 <div style="page-break-before: always;"></div>
 
 ### UC-03 — Ouverture de compte
-![Activité UC-03](activity_UC-03.png)
+![Activité UC-03](activity/activity_UC-03.png)
+
+#### Diagramme de séquence — Ouverture de compte
+![Séquence UC-03](sequence/sequence_UC-03.png)
 
 <div style="page-break-before: always;"></div>
 
 ### UC-04 — Consultation des soldes
-![Activité UC-04](activity_UC-04.png)
+![Activité UC-04](activity/activity_UC-04.png)
+
+#### Diagramme de séquence — Consultation des comptes
+![Séquence UC-04](sequence/sequence_UC-04.png)
 
 <div style="page-break-before: always;"></div>
 
 ### UC-05 — Virement bancaire & AML
-![Activité UC-05](activity_UC-05.png)
+![Activité UC-05](activity/activity_UC-05.png)
+
+#### Diagramme de séquence — Virement interne
+![Séquence UC-05 Virement interne](sequence/sequence_UC-05_virement_interne.png)
+
+<div style="page-break-before: always;"></div>
+
+#### Diagramme de séquence — Virement externe (AML)
+![Séquence UC-05 Virement externe](sequence/sequence_UC-05_virement_externe.png)
+
+<div style="page-break-before: always;"></div>
+
+#### Diagramme de séquence — Idempotence
+![Séquence UC-05 Idempotence](sequence/sequence_UC-05_idempotence.png)
+
+<div style="page-break-before: always;"></div>
+
+#### Diagramme de séquence — Compensation (rollback)
+![Séquence UC-05 Compensation](sequence/sequence_UC-05_compensation.png)
 
 <div style="page-break-before: always;"></div>
 
@@ -213,47 +253,69 @@ Voir `/docs/adr/` :
 
 ### Performance
 
-#### Test de charge progressif (k6, 5 → 15 VUs, 3m30s)
+#### Test de charge progressif — Version 1 (k6, 5 → 15 VUs + sleep 0.5s)
 
 Distribution des requêtes : 60 % lectures comptes, 20 % dépôts, 20 % virements.
 
-##### Version 1 — PostgreSQL partagé (architecture initiale)
+> **Note sur la méthodologie** : ces résultats de la version 1 étaient faussés par deux problèmes que j'ai identifiés après. D'abord, j'avais mis un `sleep(0.5)` dans le script k6, ce qui limitait le débit peu importe la capacité du système. Ensuite, la base de données était dans le même conteneur que le service. Cela signifie qu'à N=3, Docker crée 3 copies du conteneur complet, donc 3 APIs et 3 bases de données isolées. Chaque instance avait ses propres données, ce qui brisait la cohérence : un client créé sur l'instance 1 n'existait pas sur l'instance 2. J'ai corrigé ça en version 2 en séparant chaque DB dans son propre conteneur dédié, pour que toutes les instances d'un service partagent une seule source de données. Ces deux facteurs ensemble m'empêchaient de voir le vrai comportement du système sous charge, c'est pourquoi j'ai refait les tests en version 2 avec une configuration corrigée.
 
-| N instances | P95 latence | P99 latence | Taux d'erreurs | Pic RPS |
-|:-----------:|:-----------:|:-----------:|:--------------:|:-------:|
-| 1 | ~25 ms | ~50 ms | 0 % | ~50 req/s |
-| 2 | ~25 ms | ~45 ms | 0 % | ~50 req/s |
-| 3 | ~25 ms | ~50 ms | 0 % | ~13 req/s |
-| 4 | ~60 ms | ~115 ms | 0 % | ~9 req/s |
+| N instances | P95 latence | P99 latence | Taux d'erreurs | Pic RPS | RPS relatif à N=1 |
+|:-----------:|:-----------:|:-----------:|:--------------:|:-------:|:-----------------:|
+| 1 | ~25 ms | ~50 ms | 0 % | ~50 req/s | 100 % |
+| 2 | ~25 ms | ~45 ms | 0 % | ~50 req/s | 100 % |
+| 3 | ~25 ms | ~50 ms | 0 % | ~13 req/s | 26 % |
+| 4 | ~60 ms | ~115 ms | 0 % | ~9 req/s | 18 % |
 
 **Captures Grafana :**
 
 N=1 — 1 replica par service :
-![Load test N=1](../images/load-test-n1.png)
+![Load test N=1](load-stress-tests/load-test-n1.png)
 
 <div style="page-break-before: always;"></div>
 
 N=2 — 2 replicas par service :
-![Load test N=2](../images/load-test-n2.png)
+![Load test N=2](load-stress-tests/load-test-n2.png)
 
 N=3 — 3 replicas par service :
-![Load test N=3](../images/load-test-n3.png)
+![Load test N=3](load-stress-tests/load-test-n3.png)
 
 <div style="page-break-before: always;"></div>
 
 N=4 — 4 replicas par service :
-![Load test N=4](../images/load-test-n4.png)
+![Load test N=4](load-stress-tests/load-test-n4.png)
 
-##### Version 2 — PostgreSQL dédié par service (architecture corrigée)
+<div style="page-break-before: always;"></div>
 
-| N instances | P95 latence | P99 latence | Taux d'erreurs | Pic RPS |
-|:-----------:|:-----------:|:-----------:|:--------------:|:-------:|
-| 1 | — | — | — | — |
-| 2 | — | — | — | — |
-| 3 | — | — | — | — |
-| 4 | — | — | — | — |
+#### Test de charge progressif — Version 2 (k6, 5 → 25 VUs, postgres dédié)
 
-> **À compléter** : relancer `k6 run -e BASE_URL=http://localhost:8090 k6/load-test.js` pour N=1, 2, 3, 4 et reporter les résultats Grafana.
+> **Correction** : le `sleep(0.5)` a été retiré et les VUs augmentés à 25 pour mesurer le débit réel du système. Le postgres partagé a été remplacé par 3 conteneurs PostgreSQL dédiés (un par type de service).
+
+| N instances | P95 latence | P99 latence | Taux d'erreurs | Pic RPS | RPS relatif à N=1 |
+|:-----------:|:-----------:|:-----------:|:--------------:|:-------:|:-----------------:|
+| 1 | ~200 ms | ~430 ms | 0 % | ~430 req/s | 100 % |
+| 2 | ~200 ms | ~400 ms | 0 % | ~375 req/s | 87 % |
+| 3 | ~100 ms | ~400 ms | 0 % | ~300 req/s | 70 % |
+| 4 | ~200 ms | ~400 ms | 0 % | ~310 req/s | 72 % |
+
+La légère diminution du RPS à N=2,3,4 s'explique par l'overhead Docker/nginx sur une machine locale — avec 25 VUs, une seule instance suffit déjà à absorber la charge sans saturation. Le gain architectural se mesure dans le **comportement relatif** : avant le correctif, N=3 tombait à 26% du N=1. Avec le changement, il a monté à 70%.
+
+**Captures Grafana :**
+
+N=1 — 1 replica par service :
+![Load test N=1 v2](load-stress-tests/load-test-n1-v2.png)
+
+<div style="page-break-before: always;"></div>
+
+N=2 — 2 replicas par service :
+![Load test N=2 v2](load-stress-tests/load-test-n2-v2.png)
+
+N=3 — 3 replicas par service :
+![Load test N=3 v2](load-stress-tests/load-test-n3-v2.png)
+
+<div style="page-break-before: always;"></div>
+
+N=4 — 4 replicas par service :
+![Load test N=4 v2](load-stress-tests/load-test-n4-v2.png)
 
 <div style="page-break-before: always;"></div>
 
@@ -268,8 +330,13 @@ N=4 — 4 replicas par service :
 
 Le système a absorbé un pic de 60 req/s cible sans aucune erreur. La latence augmente légèrement sous spike puis se stabilise, c'est un comportement normal.
 
-**Capture Grafana — stress test :**
-![Stress test](../images/stress-test.png)
+**Capture Grafana — stress test version 1 :**
+![Stress test](load-stress-tests/stress-test.png)
+
+En version 2, le pic réel atteint ~45 req/s avec 0 erreur et une latence P95 stable sous 50 ms. Ce sont des résultats similaires à la version 1 mais avec une consommation RAM plus faible (~96 MiB vs 160 MiB).
+
+**Capture Grafana — stress test version 2 :**
+![Stress test v2](load-stress-tests/stress-test-v2.png)
 
 <div style="page-break-before: always;"></div>
 
@@ -288,7 +355,7 @@ Scénario : load-test en cours (N=2)
 Seules les 3 requêtes en cours d'exécution au moment du docker stop ont échoué. Toutes les requêtes suivantes ont été automatiquement redirigées vers les instances survivantes par nginx least_conn.
 
 **Capture Grafana — tolérance aux pannes :**
-![Kill instance](../images/kill-instance.png)
+![Kill instance](load-stress-tests/kill-instance.png)
 
 <div style="page-break-before: always;"></div>
 
@@ -302,37 +369,34 @@ Seules les 3 requêtes en cours d'exécution au moment du docker stop ont échou
 
 ## Analyse critique de l'architecture
 
-### Problème identifié : goulot d'étranglement sur la base de données partagée
+### Problème identifié : base de données dans le même conteneur que le service
 
-L'architecture initiale utilisait un **seul conteneur PostgreSQL** hébergeant les trois bases de données (`banksimple_clients`, `banksimple_accounts`, `banksimple_payments`) sur le même processus. Cette décision, acceptable pour N=1 ou N=2 replicas, révèle une limite structurelle à partir de N=3.
+Dans ma version 1, la base de données était dans le même conteneur que le service API. Le problème concret est le suivant : quand Docker crée N=3 replicas d'un service, il crée 3 copies du conteneur complet — donc 3 APIs et 3 bases de données. Chaque instance avait ses propres données, ce qui brisait la cohérence entre les replicas. Dans une application bancaire, cela signifie qu'un client créé sur l'instance 1 n'existait tout simplement pas sur l'instance 2.
 
-**Ce qui se passe à N=3 et N=4** :
+### Correction
 
-- N=3 → 9 instances de services (3×3) + nginx + Kong + Redis + Prometheus + Grafana + pgAdmin = **~15 conteneurs** se disputent les ressources de la même machine hôte
-- N=4 → 12 instances de services = **~18 conteneurs**
-- Surtout : les 9–12 instances de services établissent toutes leurs connexions vers **le même processus PostgreSQL**, qui devient le point de contention central
+J'ai séparé chaque base de données dans son propre conteneur dédié (`postgres-client`, `postgres-account`, `postgres-payment`). Maintenant, quand je crée N replicas d'un service, toutes les instances partagent le même conteneur de base de données.
 
-Le résultat visible dans les tests : le RPS s'effondre de ~50 req/s (N=1,2) à ~13 req/s (N=3) puis ~9 req/s (N=4), malgré une latence et un taux d'erreurs encore dans les seuils. Ce n'est pas la scalabilité des services qui est en cause — c'est la **ressource partagée en bas de pile** qui sature en premier.
+### Observation
 
-### Faille architecturale
+En version 2, j'ai observé que le RPS passe de ~430 req/s à N=1 à ~375 req/s à N=2, puis ~300 req/s à N=3 et N=4. Selon moi, il y a une raison qui explique ça :
 
-L'isolation entre microservices était logique (3 bases de données distinctes) mais pas physique : les 3 bases vivaient sur le même moteur PostgreSQL. Cela contredit le principe fondamental des microservices selon lequel chaque service doit posséder sa propre ressource de persistance de façon autonome et indépendante.
+**La machine locale fait tout en même temps.** À N=4, j'ai 12 instances de services + 3 postgres + Redis + Kong + nginx + Prometheus + Grafana = ~20 conteneurs sur la même machine. Chaque conteneur consomme CPU et RAM. En production, ce problème n'existe pas, car cette tâche est effectué sur des machines dédiées séparées.
 
-```
-Avant (fautif) :           Après (corrigé) :
+### Ce qui est fait
 
-client-service ──┐         client-service  ── postgres-client
-account-service ─┼──► postgres   account-service ── postgres-account
-payment-service ─┘         payment-service ── postgres-payment
-```
+- **Isolation des services** : chaque microservice a son domaine, sa DB et son API indépendants
+- **Compensation pattern** : si un virement échoue à mi-chemin, le système rembourse automatiquement le compte source
+- **Idempotence** : une requête de virement en double est détectée via Redis et ignorée
+- **Observabilité** : Prometheus + Grafana donnent une vue en temps réel du trafic, de la latence et de la saturation
+- **Sécurité** : JWT + MFA (OTP via Redis avec TTL 5 min), rate limiting via Kong
 
-Avec l'architecture initiale, scaler les services sans scaler la DB ne produit aucun gain — pire, cela augmente la contention sur une ressource fixe.
+### Limites qui restent
 
-### Correctif appliqué
-
-Chaque microservice dispose maintenant de son **propre conteneur PostgreSQL dédié** (`postgres-client`, `postgres-account`, `postgres-payment`). Chaque conteneur est isolé, a son propre volume de données, et son propre healthcheck. Les connexions des replicas sont distribuées sur 3 processus postgres indépendants au lieu d'un seul.
-
-Ce changement permet à chaque service de scaler horizontalement sans créer de pression sur les services voisins.
+- **Scaling manuel** : fix `replicas: 4` dans le docker-compose. En production, il faudrait Kubernetes pour faire du scaling automatique selon la charge réelle
+- **OTP visible dans la réponse** : en phase 1, le code OTP est retourné directement dans la réponse API. En production réelle, il serait envoyé par email ou SMS
+- **SHA256 pour les mots de passe** : j'utilise SHA256 en phase 1. Il faudrait passer à bcrypt qui est conçu pour être lent et résistant aux attaques par force brute
+- **ComplianceService non implémenté** : le service de détection AML est prévu dans l'architecture mais pas encore développé UC-06, UC-07 et UC-08
 
 <div style="page-break-before: always;"></div>
 

@@ -1,5 +1,6 @@
 using PaymentService.Application.Services;
 using PaymentService.Domain.Entities;
+using PaymentService.Domain.Interfaces;
 using PaymentService.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

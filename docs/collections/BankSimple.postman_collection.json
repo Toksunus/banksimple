@@ -15,7 +15,7 @@
 						"header": [{ "key": "Content-Type", "value": "application/json" }],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"login\": \"12345678901\",\n  \"motDePasse\": \"Test1234x\"\n}",
+							"raw": "{\n  \"login\": \"123456789\",\n  \"motDePasse\": \"Test1\"\n}",
 							"options": { "raw": { "language": "json" } }
 						},
 						"url": {
@@ -83,7 +83,7 @@
 						"header": [{ "key": "Content-Type", "value": "application/json" }],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"nom\": \"Alice Tremblay\",\n  \"adresse\": \"100 rue Maple, Montréal\",\n  \"nasSimule\": \"12345678901\",\n  \"motDePasse\": \"Test1234x\"\n}",
+							"raw": "{\n  \"nom\": \"Jad Bizri\",\n  \"email\": \"jad.bizri@gmail.com\",\n  \"nasSimule\": \"123456789\",\n  \"motDePasse\": \"Test1\"\n}",
 							"options": { "raw": { "language": "json" } }
 						},
 						"url": {
@@ -161,7 +161,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"type\": \"Cheque\"\n}",
+							"raw": "{\n  \"type\": \"Cheque\",\n  \"key\": \"test@banksimple.com\"\n}",
 							"options": { "raw": { "language": "json" } }
 						},
 						"url": {

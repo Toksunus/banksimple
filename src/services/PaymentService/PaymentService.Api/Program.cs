@@ -1,5 +1,6 @@
 using PaymentService.Application.Services;
 using PaymentService.Domain.Interfaces;
+using PaymentService.Infrastructure.Messaging;
 using PaymentService.Infrastructure.Persistence;
 using PaymentService.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -31,6 +32,8 @@ builder.Services.AddDbContext<PaymentDbContext>(options =>
         b => b.MigrationsAssembly("PaymentService.Infrastructure")));
 
 builder.Services.AddScoped<IVirementRepository, VirementRepository>();
+builder.Services.AddScoped<IVirementSagaRepository, VirementSagaRepository>();
+builder.Services.AddScoped<IVirementSagaOrchestrator, VirementSagaOrchestrator>();
 builder.Services.AddScoped<VirementService>();
 
 // Register typed HttpClient for AccountService communication
@@ -99,6 +102,18 @@ builder.Services.AddSwaggerGen(options =>
 
 builder.Services.AddSingleton<IConnectionMultiplexer>(
     ConnectionMultiplexer.Connect(builder.Configuration["Redis:ConnectionString"]!));
+
+var kafkaBrokerUrl = builder.Configuration["Kafka:BrokerUrl"] ?? "kafka:29092";
+var kafkaGroupId = builder.Configuration["Kafka:GroupId"] ?? "banksimple-payment";
+
+builder.Services.AddSingleton<IKafkaMessenger>(new KafkaMessenger(kafkaBrokerUrl));
+
+builder.Services.AddHostedService(sp => new KafkaConsumer(
+    kafkaBrokerUrl,
+    kafkaGroupId,
+    sp.GetRequiredService<IKafkaMessenger>(),
+    sp.GetRequiredService<ILogger<KafkaConsumer>>(),
+    sp.GetRequiredService<IServiceScopeFactory>()));
 
 builder.Services.AddHealthChecks();
 

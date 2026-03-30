@@ -3,22 +3,17 @@ using PaymentService.Domain.Interfaces;
 
 namespace PaymentService.Application.Services;
 
-public class VirementRequest
-{
-    public Guid CompteSourceId { get; set; }
-    public Guid CompteDestinataireId { get; set; }
-    public decimal Montant { get; set; }
-}
-
 public class VirementService
 {
     private readonly IVirementRepository _virementRepository;
     private readonly IAccountServiceClient _accountServiceClient;
+    private readonly IVirementSagaOrchestrator _sagaOrchestrator;
 
-    public VirementService(IVirementRepository virementRepository, IAccountServiceClient accountServiceClient)
+    public VirementService(IVirementRepository virementRepository, IAccountServiceClient accountServiceClient, IVirementSagaOrchestrator sagaOrchestrator)
     {
         _virementRepository = virementRepository;
         _accountServiceClient = accountServiceClient;
+        _sagaOrchestrator = sagaOrchestrator;
     }
 
     public async Task<List<Virement>> GetByCompteIdAsync(Guid compteId)
@@ -46,45 +41,6 @@ public class VirementService
                 estSuspect = true;
         }
 
-        await _accountServiceClient.DebitAsync(command.CompteSourceId, command.Montant);
-
-        try
-        {
-            await _accountServiceClient.CreditAsync(command.CompteDestinataireId, command.Montant);
-        }
-        catch
-        {
-            try
-            {
-                await _accountServiceClient.CreditAsync(command.CompteSourceId, command.Montant);
-            }
-            catch
-            {
-            }
-
-            var virementEchoue = new Virement
-            {
-                VirementId = Guid.NewGuid(),
-                CompteSourceId = command.CompteSourceId,
-                CompteDestinataireId = command.CompteDestinataireId,
-                Montant = command.Montant,
-                DateVirement = DateTime.UtcNow,
-                Statut = "Echoué"
-            };
-
-            return await _virementRepository.CreateAsync(virementEchoue);
-        }
-
-        var virement = new Virement
-        {
-            VirementId = Guid.NewGuid(),
-            CompteSourceId = command.CompteSourceId,
-            CompteDestinataireId = command.CompteDestinataireId,
-            Montant = command.Montant,
-            DateVirement = DateTime.UtcNow,
-            Statut = estSuspect ? "Suspect" : "Effectué"
-        };
-
-        return await _virementRepository.CreateAsync(virement);
+        return await _sagaOrchestrator.VirementAsync(command, estSuspect);
     }
 }

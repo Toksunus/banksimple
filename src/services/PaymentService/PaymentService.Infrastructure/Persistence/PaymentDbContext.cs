@@ -10,6 +10,7 @@ public class PaymentDbContext : DbContext
 
     public DbSet<Virement> Virements { get; set; }
     public DbSet<AuditLog> AuditLogs { get; set; }
+    public DbSet<VirementSaga> VirementSagas { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -21,6 +22,13 @@ public class PaymentDbContext : DbContext
             entity.Property(v => v.Montant).HasPrecision(18, 2);
             entity.Property(v => v.DateVirement).IsRequired();
             entity.Property(v => v.Statut).IsRequired().HasMaxLength(50);
+        });
+
+        modelBuilder.Entity<VirementSaga>(entity =>
+        {
+            entity.HasKey(s => s.SagaId);
+            entity.Property(s => s.Montant).HasPrecision(18, 2);
+            entity.Property(s => s.Etape).IsRequired().HasMaxLength(50);
         });
     }
 }

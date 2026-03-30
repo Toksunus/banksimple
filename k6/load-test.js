@@ -16,8 +16,8 @@ export const options = {
       stages: [
         { duration: '30s', target: 5   },
         { duration: '1m',  target: 5   },
-        { duration: '30s', target: 15  },
-        { duration: '1m',  target: 15  },
+        { duration: '30s', target: 25  },
+        { duration: '1m',  target: 25  },
         { duration: '30s', target: 0   },
       ],
     },
@@ -178,7 +178,7 @@ export default function (data) {
     if (!ok) { erreursTotal.add(1); tauxErreurs.add(1); } else { tauxErreurs.add(0); }
   }
 
-  sleep(0.5);
+  // sleep retiré pour mesurer le débit réel du système
 }
 
 export function teardown(data) {
