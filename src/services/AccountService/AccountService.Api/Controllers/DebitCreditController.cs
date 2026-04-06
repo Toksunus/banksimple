@@ -75,6 +75,7 @@ public class DebitCreditController : ControllerBase
         {
             compte.CompteId,
             compte.ClientId,
+            compte.BbcCompteId,
             compte.Solde,
             compte.Statut,
             compte.Type

@@ -17,6 +17,8 @@ public class AccountDbContext : DbContext
         modelBuilder.Entity<Compte>(entity =>
         {
             entity.HasKey(cb => cb.CompteId);
+            entity.Property(cb => cb.BbcCompteId).ValueGeneratedOnAdd();
+            entity.HasIndex(cb => cb.BbcCompteId).IsUnique();
             entity.Property(cb => cb.Type).IsRequired().HasMaxLength(50);
             entity.Property(cb => cb.Solde).HasPrecision(18, 2);
             entity.Property(cb => cb.DateOuverture).IsRequired();

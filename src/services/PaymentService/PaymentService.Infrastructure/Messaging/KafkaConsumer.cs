@@ -5,43 +5,40 @@ using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using PaymentService.Domain.Interfaces;
 using PaymentService.Domain.Entities;
-using System.Threading.Tasks;
 
 namespace PaymentService.Infrastructure.Messaging;
 
 public class KafkaConsumer : BackgroundService
 {
     private readonly IConsumer<string, string> _consumer;
-    private readonly IKafkaMessenger _messenger;
     private readonly ILogger<KafkaConsumer> _logger;
     private readonly IServiceScopeFactory _scopeFactory;
-    private const string RequestTypePaymentInitiated = "payment.initiated";
-    private const string RequestTypeCreditNotify = "payment.credit.notify";
-    private const string RequestTypeParticipantResponse = "participant.response";
+    private const string EventTypeOrigin = "CREATE_TRANSACTION_ORIGIN";
+    private const string EventTypeDestination = "CREATE_TRANSACTION_DESTINATION";
+    private const string EventTypeCompensate = "COMPENSATE_ORIGIN";
 
     public KafkaConsumer(
-        string bbcUrl,
-        string instanceId,
-        IKafkaMessenger messenger,
+        string brokerUrl,
+        string groupId,
+        string bankId,
         ILogger<KafkaConsumer> logger,
         IServiceScopeFactory scopeFactory)
     {
-        _messenger = messenger;
         _logger = logger;
         _scopeFactory = scopeFactory;
 
         var config = new ConsumerConfig
         {
-            BootstrapServers = bbcUrl,
-            GroupId = instanceId
+            BootstrapServers = brokerUrl,
+            GroupId = groupId,
+            AutoOffsetReset = AutoOffsetReset.Earliest
         };
         _consumer = new ConsumerBuilder<string, string>(config).Build();
+        _consumer.Subscribe($"bbc.events.{bankId}");
     }
 
     protected override async Task ExecuteAsync(CancellationToken stopRequestToken)
     {
-        _consumer.Subscribe(new[] { RequestTypeCreditNotify, RequestTypePaymentInitiated });
-
         await Task.Run(async () =>
         {
             while (!stopRequestToken.IsCancellationRequested)
@@ -49,23 +46,21 @@ public class KafkaConsumer : BackgroundService
                 try
                 {
                     var consumerResult = _consumer.Consume(stopRequestToken);
+                    var bbcEvent = JsonSerializer.Deserialize<BbcEvent>(consumerResult.Message.Value);
+                    if (bbcEvent == null) continue;
 
-                    // result of the requestType sent to the system
-                    switch (consumerResult.Topic)
+                    switch (bbcEvent.EventType)
                     {
-                        // id and value of the message sent to the system
-                        case RequestTypePaymentInitiated:
-                            await HandlePaymentInitiated(consumerResult.Message.Key, consumerResult.Message.Value);
+                        case EventTypeOrigin:
+                            await HandleOrigin(bbcEvent);
                             break;
-                        // id and value of the message sent to the system
-                        case RequestTypeCreditNotify:
-                            await HandleCreditNotify(consumerResult.Message.Key, consumerResult.Message.Value);
+                        case EventTypeDestination:
+                            await HandleDestination(bbcEvent);
                             break;
-                        // case RequestTypeParticipantResponse:
-                        //     // Handle participant responses if needed
-                        //     break;
+                        case EventTypeCompensate:
+                            await HandleCompensate(bbcEvent);
+                            break;
                     }
-                    //makes sure that kafka knows that the message has been processed and can commit the offset
                     _consumer.Commit(consumerResult);
                 }
                 catch (Exception ex)
@@ -73,46 +68,62 @@ public class KafkaConsumer : BackgroundService
                     _logger.LogError(ex, "Error occurred while consuming message");
                 }
             }
-        }
-        , stopRequestToken);
+        }, stopRequestToken);
     }
 
-    private async Task HandlePaymentInitiated(string paymentId, string payload)
+    private async Task HandleOrigin(BbcEvent bbcEvent)
     {
-        var paymentDetails = JsonSerializer.Deserialize<PaymentDetails>(payload);
         using var scope = _scopeFactory.CreateScope();
-        var clientAccount = scope.ServiceProvider.GetRequiredService<IAccountServiceClient>();
-        var compte = await clientAccount.GetCompteByKeyAsync(paymentDetails.FromKey);
+        var accountClient = scope.ServiceProvider.GetRequiredService<IAccountServiceClient>();
+        var bbcClient = scope.ServiceProvider.GetRequiredService<IBbcServiceClient>();
 
-        if(compte == null)
+        try
         {
-            _logger.LogWarning("Account not found for paymentId: {PaymentId} with account key: {AccountKey}", paymentId, paymentDetails.FromKey);
-            return;
+            await accountClient.DebitAsync(bbcEvent.AccountId, bbcEvent.Amount);
+            _logger.LogInformation("Compte debité pour transactionId: {TransactionId}, accountId: {AccountId}", bbcEvent.TransactionId, bbcEvent.AccountId);
+            await bbcClient.ConfirmTransactionAsync(bbcEvent.AccountId, bbcEvent.Amount, bbcEvent.TransactionId, true, "CONFIRMED");
         }
-        
-        await clientAccount.DebitAsync(compte.CompteId, paymentDetails.Amount);
-        _logger.LogInformation("Account debited for paymentId: {PaymentId} with account key: {AccountKey}", paymentId, paymentDetails.FromKey);
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Debit failed for transactionId: {TransactionId}", bbcEvent.TransactionId);
+            await bbcClient.ConfirmTransactionAsync(bbcEvent.AccountId, bbcEvent.Amount, bbcEvent.TransactionId, true, "FAILED");
+        }
     }
 
-    private async Task HandleCreditNotify(string paymentId, string payload)
+    private async Task HandleDestination(BbcEvent bbcEvent)
     {
-        var paymentDetails = JsonSerializer.Deserialize<PaymentDetails>(payload);
         using var scope = _scopeFactory.CreateScope();
-        var clientAccount = scope.ServiceProvider.GetRequiredService<IAccountServiceClient>();
-        var compte = await clientAccount.GetCompteByKeyAsync(paymentDetails.ToKey);
+        var accountClient = scope.ServiceProvider.GetRequiredService<IAccountServiceClient>();
+        var bbcClient = scope.ServiceProvider.GetRequiredService<IBbcServiceClient>();
 
-        if(compte == null)
+        try
         {
-            _logger.LogWarning("Account not found for paymentId: {PaymentId} with account key: {AccountKey}", paymentId, paymentDetails.ToKey);
-            return;
+            await accountClient.CreditAsync(bbcEvent.AccountId, bbcEvent.Amount);
+            _logger.LogInformation("Compte crédité pour transactionId: {TransactionId}, accountId: {AccountId}", bbcEvent.TransactionId, bbcEvent.AccountId);
+            await bbcClient.ConfirmTransactionAsync(bbcEvent.AccountId, bbcEvent.Amount, bbcEvent.TransactionId, false, "CONFIRMED");
         }
-
-        await clientAccount.CreditAsync(compte.CompteId, paymentDetails.Amount);
-        _logger.LogInformation("Account credited for paymentId: {PaymentId} with account key: {AccountKey}", paymentId, paymentDetails.ToKey);
-        
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Crédit échoué pour transactionId: {TransactionId}", bbcEvent.TransactionId);
+            await bbcClient.ConfirmTransactionAsync(bbcEvent.AccountId, bbcEvent.Amount, bbcEvent.TransactionId, false, "FAILED");
+        }
     }
 
-    // Handle responses from participants is managed by the centralized bank
+    private async Task HandleCompensate(BbcEvent bbcEvent)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var accountClient = scope.ServiceProvider.GetRequiredService<IAccountServiceClient>();
+
+        try
+        {
+            await accountClient.CreditAsync(bbcEvent.AccountId, bbcEvent.Amount);
+            _logger.LogInformation("Compte compensé pour transactionId: {TransactionId}, accountId: {AccountId}", bbcEvent.TransactionId, bbcEvent.AccountId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Compensation échouée pour transactionId: {TransactionId}", bbcEvent.TransactionId);
+        }
+    }
 
     public override void Dispose()
     {

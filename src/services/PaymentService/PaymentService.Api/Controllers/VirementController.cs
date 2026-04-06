@@ -17,13 +17,15 @@ public class VirementController : ControllerBase
 {
     private readonly VirementService _virementService;
     private readonly IAccountServiceClient _accountServiceClient;
+    private readonly IBbcServiceClient _bbcServiceClient;
     private readonly IDatabase _redis;
     private readonly PaymentDbContext _db;
 
-    public VirementController(VirementService virementService, IAccountServiceClient accountServiceClient, IConnectionMultiplexer redis, PaymentDbContext db)
+    public VirementController(VirementService virementService, IAccountServiceClient accountServiceClient, IBbcServiceClient bbcServiceClient, IConnectionMultiplexer redis, PaymentDbContext db)
     {
         _virementService = virementService;
         _accountServiceClient = accountServiceClient;
+        _bbcServiceClient = bbcServiceClient;
         _redis = redis.GetDatabase();
         _db = db;
     }
@@ -97,6 +99,29 @@ public class VirementController : ControllerBase
             await _db.SaveChangesAsync();
 
             return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpPost("externe")]
+    public async Task<IActionResult> EffectuerVirementExterne([FromBody] VirementRequest request)
+    {
+        if (request.CompteSourceId == Guid.Empty)
+            return BadRequest(new { error = "Compte source est requis pour un virement externe." });
+        if (string.IsNullOrEmpty(request.ToKey))
+            return BadRequest(new { error = "ToKey est requis pour un virement externe." });
+
+        try
+        {
+            var compte = await _accountServiceClient.GetCompteAsync(request.CompteSourceId);
+            if (compte == null)
+                return NotFound(new { error = "Compte source introuvable." });
+
+            await _bbcServiceClient.TransactionsAsync(compte.BbcCompteId, request.ToKey, request.Montant);
+            return Ok(new { message = "Transaction initiée chez BBC." });
         }
         catch (Exception ex)
         {

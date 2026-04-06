@@ -259,6 +259,27 @@
 					"response": []
 				},
 				{
+					"name": "/virements/externe",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Authorization", "value": "Bearer {{token}}" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"compteSourceId\": \"{{compteId}}\",\n  \"toKey\": \"destinataire@autrebanque.com\",\n  \"montant\": 150.00\n}",
+							"options": { "raw": { "language": "json" } }
+						},
+						"url": {
+							"raw": "{{baseURL}}/api/v1/virements/externe",
+							"host": ["{{baseURL}}"],
+							"path": ["api", "v1", "virements", "externe"]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "/virements/compte/:compteId",
 					"request": {
 						"method": "GET",

@@ -1,6 +1,7 @@
 using PaymentService.Application.Services;
 using PaymentService.Domain.Interfaces;
 using PaymentService.Infrastructure.Messaging;
+using PaymentService.Domain.Entities;
 using PaymentService.Infrastructure.Persistence;
 using PaymentService.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -105,13 +106,20 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(
 
 var kafkaBrokerUrl = builder.Configuration["Kafka:BrokerUrl"] ?? "kafka:29092";
 var kafkaGroupId = builder.Configuration["Kafka:GroupId"] ?? "banksimple-payment";
+var kafkaBankId = builder.Configuration["Kafka:BankId"] ?? "1";
 
-builder.Services.AddSingleton<IKafkaMessenger>(new KafkaMessenger(kafkaBrokerUrl));
+var bbcBaseUrl = builder.Configuration["Bbc:BaseUrl"] ?? "http://host.docker.internal:5005";
+var bbcBankId = int.Parse(builder.Configuration["Bbc:BankId"] ?? "1");
+
+builder.Services.AddHttpClient<IBbcServiceClient>(client =>
+{
+    client.BaseAddress = new Uri(bbcBaseUrl);
+}).AddTypedClient<IBbcServiceClient>((httpClient, sp) => new BbcServiceHttpClient(httpClient, bbcBankId));
 
 builder.Services.AddHostedService(sp => new KafkaConsumer(
     kafkaBrokerUrl,
     kafkaGroupId,
-    sp.GetRequiredService<IKafkaMessenger>(),
+    kafkaBankId,
     sp.GetRequiredService<ILogger<KafkaConsumer>>(),
     sp.GetRequiredService<IServiceScopeFactory>()));
 
