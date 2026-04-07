@@ -65,6 +65,24 @@ public class DebitCreditController : ControllerBase
         });
     }
 
+    [HttpGet("bbc/{bbcCompteId:int}")]
+    public async Task<IActionResult> GetCompteByBbcId(int bbcCompteId)
+    {
+        var compte = await _compteService.GetCompteByBbcIdAsync(bbcCompteId);
+        if (compte == null) return NotFound(new { error = "Compte introuvable." });
+
+        return Ok(new
+        {
+            compte.CompteId,
+            compte.ClientId,
+            compte.BbcCompteId,
+            compte.Solde,
+            compte.Statut,
+            compte.Type,
+            compte.Key
+        });
+    }
+
     [HttpGet("{compteId:guid}")]
     public async Task<IActionResult> GetCompte(Guid compteId)
     {
@@ -78,7 +96,8 @@ public class DebitCreditController : ControllerBase
             compte.BbcCompteId,
             compte.Solde,
             compte.Statut,
-            compte.Type
+            compte.Type,
+            compte.Key
         });
     }
 }

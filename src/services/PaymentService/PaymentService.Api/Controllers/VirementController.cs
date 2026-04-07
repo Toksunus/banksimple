@@ -106,6 +106,26 @@ public class VirementController : ControllerBase
         }
     }
 
+    [HttpPost("comptes/{compteId:guid}/register-bbc")]
+    public async Task<IActionResult> RegisterBbc(Guid compteId)
+    {
+        try
+        {
+            var compte = await _accountServiceClient.GetCompteAsync(compteId);
+            if (compte == null)
+                return NotFound(new { error = "Compte introuvable." });
+            if (string.IsNullOrEmpty(compte.Key))
+                return BadRequest(new { error = "Ce compte n'a pas de clé BBC." });
+
+            await _bbcServiceClient.RegisterKeyAsync(compte.BbcCompteId, compte.Key);
+            return Ok(new { message = $"Clé '{compte.Key}' enregistrée chez BBC." });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
     [HttpPost("externe")]
     public async Task<IActionResult> EffectuerVirementExterne([FromBody] VirementRequest request)
     {

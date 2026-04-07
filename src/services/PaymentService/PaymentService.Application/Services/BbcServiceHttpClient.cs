@@ -31,11 +31,27 @@ public class BbcServiceHttpClient : IBbcServiceClient
         }
     }
 
-    public async Task ConfirmTransactionAsync(Guid accountId, decimal amount, int transactionId, bool isOrigin, string status)
+    public async Task RegisterKeyAsync(int bbcCompteId, string clientKey)
     {
         var payload = new
         {
-            from_account_id = accountId,
+            client_key = clientKey,
+            account_id = bbcCompteId,
+            bank_id = _bankId
+        };
+        var response = await _httpClient.PostAsJsonAsync("/create-key", payload);
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await response.Content.ReadAsStringAsync();
+            throw new Exception($"BBC key registration failed: {error}");
+        }
+    }
+
+    public async Task ConfirmTransactionAsync(int bbcAccountId, decimal amount, int transactionId, bool isOrigin, string status)
+    {
+        var payload = new
+        {
+            from_account_id = bbcAccountId,
             from_bank_id = _bankId,
             amount,
             is_origin = isOrigin,

@@ -55,4 +55,10 @@ public class CompteRepository : ICompteRepository
         return await _context.Comptes
             .FirstOrDefaultAsync(c => c.Key == key);
     }
+
+    public async Task<Compte?> GetByBbcIdAsync(int bbcCompteId)
+    {
+        return await _context.Comptes
+            .FirstOrDefaultAsync(c => c.BbcCompteId == bbcCompteId);
+    }
 }

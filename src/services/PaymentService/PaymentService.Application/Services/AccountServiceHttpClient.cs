@@ -34,6 +34,16 @@ public class AccountServiceHttpClient : IAccountServiceClient
     }
 
 
+    public async Task<CompteDto?> GetCompteByBbcIdAsync(int bbcCompteId)
+    {
+        var response = await _httpClient.GetAsync($"/internal/comptes/bbc/{bbcCompteId}");
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            return null;
+
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<CompteDto>();
+    }
+
     public async Task<CompteDto> DebitAsync(Guid compteId, decimal montant)
     {
         var response = await _httpClient.PostAsJsonAsync($"/internal/comptes/{compteId}/debit", montant);

@@ -280,6 +280,19 @@
 					"response": []
 				},
 				{
+					"name": "/virements/comptes/:compteId/register-bbc",
+					"request": {
+						"method": "POST",
+						"header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+						"url": {
+							"raw": "{{baseURL}}/api/v1/virements/comptes/{{compteId}}/register-bbc",
+							"host": ["{{baseURL}}"],
+							"path": ["api", "v1", "virements", "comptes", "{{compteId}}", "register-bbc"]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "/virements/compte/:compteId",
 					"request": {
 						"method": "GET",

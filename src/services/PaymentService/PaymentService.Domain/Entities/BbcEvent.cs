@@ -7,7 +7,7 @@ public class BbcEvent
     [JsonPropertyName("event_type")]
     public string EventType { get; set; } = string.Empty;
     [JsonPropertyName("account_id")]
-    public Guid AccountId { get; set; }
+    public int AccountId { get; set; }
     [JsonPropertyName("amount")]
     public decimal Amount { get; set; }
     [JsonPropertyName("is_origin")]

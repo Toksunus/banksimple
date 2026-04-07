@@ -79,8 +79,10 @@ public class KafkaConsumer : BackgroundService
 
         try
         {
-            await accountClient.DebitAsync(bbcEvent.AccountId, bbcEvent.Amount);
-            _logger.LogInformation("Compte debité pour transactionId: {TransactionId}, accountId: {AccountId}", bbcEvent.TransactionId, bbcEvent.AccountId);
+            var compte = await accountClient.GetCompteByBbcIdAsync(bbcEvent.AccountId);
+            if (compte == null) throw new Exception($"Compte introuvable pour BbcCompteId: {bbcEvent.AccountId}");
+            await accountClient.DebitAsync(compte.CompteId, bbcEvent.Amount);
+            _logger.LogInformation("Compte debité pour transactionId: {TransactionId}, bbcAccountId: {AccountId}", bbcEvent.TransactionId, bbcEvent.AccountId);
             await bbcClient.ConfirmTransactionAsync(bbcEvent.AccountId, bbcEvent.Amount, bbcEvent.TransactionId, true, "CONFIRMED");
         }
         catch (Exception ex)
@@ -98,8 +100,10 @@ public class KafkaConsumer : BackgroundService
 
         try
         {
-            await accountClient.CreditAsync(bbcEvent.AccountId, bbcEvent.Amount);
-            _logger.LogInformation("Compte crédité pour transactionId: {TransactionId}, accountId: {AccountId}", bbcEvent.TransactionId, bbcEvent.AccountId);
+            var compte = await accountClient.GetCompteByBbcIdAsync(bbcEvent.AccountId);
+            if (compte == null) throw new Exception($"Compte introuvable pour BbcCompteId: {bbcEvent.AccountId}");
+            await accountClient.CreditAsync(compte.CompteId, bbcEvent.Amount);
+            _logger.LogInformation("Compte crédité pour transactionId: {TransactionId}, bbcAccountId: {AccountId}", bbcEvent.TransactionId, bbcEvent.AccountId);
             await bbcClient.ConfirmTransactionAsync(bbcEvent.AccountId, bbcEvent.Amount, bbcEvent.TransactionId, false, "CONFIRMED");
         }
         catch (Exception ex)
@@ -116,8 +120,10 @@ public class KafkaConsumer : BackgroundService
 
         try
         {
-            await accountClient.CreditAsync(bbcEvent.AccountId, bbcEvent.Amount);
-            _logger.LogInformation("Compte compensé pour transactionId: {TransactionId}, accountId: {AccountId}", bbcEvent.TransactionId, bbcEvent.AccountId);
+            var compte = await accountClient.GetCompteByBbcIdAsync(bbcEvent.AccountId);
+            if (compte == null) throw new Exception($"Compte introuvable pour BbcCompteId: {bbcEvent.AccountId}");
+            await accountClient.CreditAsync(compte.CompteId, bbcEvent.Amount);
+            _logger.LogInformation("Compte compensé pour transactionId: {TransactionId}, bbcAccountId: {AccountId}", bbcEvent.TransactionId, bbcEvent.AccountId);
         }
         catch (Exception ex)
         {

@@ -8,4 +8,5 @@ public class CompteDto
     public decimal Solde { get; set; }
     public string Statut { get; set; } = string.Empty;
     public string Type { get; set; } = string.Empty;
+    public string? Key { get; set; }
 }

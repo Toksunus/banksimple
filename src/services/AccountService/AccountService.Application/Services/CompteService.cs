@@ -51,6 +51,11 @@ public class CompteService
         return await _compteRepository.GetByKeyAsync(key);
     }
 
+    public async Task<Compte?> GetCompteByBbcIdAsync(int bbcCompteId)
+    {
+        return await _compteRepository.GetByBbcIdAsync(bbcCompteId);
+    }
+
     public async Task<List<Compte>> GetComptesByClientIdAsync(Guid clientId)
     {
         return await _compteRepository.GetByClientIdAsync(clientId);
