@@ -22,6 +22,8 @@ Un monolithe aurait été plus simple à démarrer, mais impossible à scaler pa
 
 ## Démarrage rapide
 
+### 1. Lancer tous les services
+
 ```bash
 docker compose up -d --build
 ```
@@ -30,6 +32,38 @@ Le système est prêt quand tous les conteneurs affichent `(healthy)` :
 
 ```bash
 docker ps
+```
+
+### 2. Lancer le frontend
+
+```bash
+cd frontend
+npm install      # seulement la première fois
+npm run dev
+```
+
+Frontend disponible sur `http://localhost:5173`
+
+### 3. Rebuild un service spécifique
+
+```bash
+docker compose up -d --build payment-service
+docker compose up -d --build account-service
+docker compose up -d --build client-service
+```
+
+### 4. Voir les logs d'un service
+
+```bash
+docker logs banksimple-payment-service-1 --tail 30 --follow
+docker logs banksimple-account-service-1 --tail 30 --follow
+docker logs banksimple-client-service-1  --tail 30 --follow
+```
+
+### 5. Arrêter tout
+
+```bash
+docker compose down
 ```
 
 ## Endpoints principaux (via Kong — `localhost:8090`)
@@ -53,7 +87,9 @@ docker ps
 ### Virements
 | Méthode | Route | Description |
 |---------|-------|-------------|
-| POST | `/api/v1/virements` | Effectuer un virement (idempotent 24 h) |
+| POST | `/api/v1/virements` | Virement interne (saga + AML, idempotent 24 h) |
+| POST | `/api/v1/virements/externe` | Virement interbanque via BBC |
+| POST | `/api/v1/virements/comptes/{compteId}/register-bbc` | Enregistrer la clé du compte au BBC |
 | GET | `/api/v1/virements/compte/{compteId}` | Historique des virements |
 
 > Toutes les routes (sauf inscription/login) requièrent `Authorization: Bearer <token>`
@@ -76,8 +112,8 @@ J'ai choisi Prometheus + Grafana parce que la stack est entièrement open-source
 
 | URL | Service |
 |-----|---------|
-| http://localhost:3000 | Grafana (admin / admin) |
-| http://localhost:9090 | Prometheus |
+| http://localhost:3002 | Grafana (admin / admin) |
+| http://localhost:9095 | Prometheus |
 | http://localhost:5050 | pgAdmin (admin@banksimple.ca / admin) |
 
 Les **4 Golden Signals** sont visibles en temps réel :
@@ -120,7 +156,7 @@ nginx s'adapte automatiquement aux nouveaux conteneurs via le DNS interne Docker
 | Document | Chemin |
 |----------|--------|
 | Architecture Arc42 | `docs/arc42/doc.md` |
-| ADRs (5 décisions) | `docs/adr/` |
+| ADRs (6 décisions) | `docs/adr/` |
 | Vues 4+1 (PlantUML) | `docs/views/` |
 | Collection Postman | `docs/collections/` |
 | Captures Grafana | `docs/images/` |

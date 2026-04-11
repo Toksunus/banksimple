@@ -240,6 +240,7 @@ Voir `/docs/adr/` :
 - [ADR-003](../adr/ADR-003-observabilite-prometheus-serilog.md) — Prometheus + Grafana + Serilog
 - [ADR-004](../adr/ADR-004-decomposition-microservices.md) — Décomposition en microservices
 - [ADR-005](../adr/ADR-005-api-gateway-kong.md) — API Gateway avec Kong
+- [ADR-006](../adr/ADR-006-saga-interbanques-bbc.md) — Saga orchestrée pour les virements internes
 
 <div style="page-break-before: always;"></div>
 
@@ -390,6 +391,12 @@ En version 2, j'ai observé que le RPS passe de ~430 req/s à N=1 à ~375 req/s 
 - **Idempotence** : une requête de virement en double est détectée via Redis et ignorée
 - **Observabilité** : Prometheus + Grafana donnent une vue en temps réel du trafic, de la latence et de la saturation
 - **Sécurité** : JWT + MFA (OTP via Redis avec TTL 5 min), rate limiting via Kong
+
+### Problème identifié et résolu — Sage Orchestrée des virements internes
+
+Un virement interne implique deux opérations séquentielles : débiter le compte source et créditer le compte destinataire. Sans mécanisme de coordination, si le crédit échoue après le débit, le client perd son argent et le système reste dans un état incohérent.
+
+J'ai implémenté un `VirementSagaOrchestrator` qui coordonne ces deux étapes avec compensation automatique. Chaque étape est persistée en base via un `VirementSaga`. Si le débit réussit mais que le crédit échoue, le compte source est automatiquement recrédité. Si la compensation elle-même échoue, l'état `CompensationEchouée` est enregistré pour intervention manuelle. Cette implémentation est documentée dans l'[ADR-006](../adr/ADR-006-saga-interbanques-bbc.md).
 
 ### Limites qui restent
 
